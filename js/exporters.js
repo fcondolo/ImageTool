@@ -206,10 +206,10 @@ function saveSprite(_saveWindow) {
 				if (includeCtrl) {
 					var words = genSpriteCtrlWords(coveredWidth + sprtScrX, coveredHeight + sprtScrY, sprtH, false);
 					sprtStr += "\tdc.w\t$" + v(words.pos & 65535).toString(16) + ", $" + v(words.ctl & 65535).toString(16) + "\t; control words\n";
-					sprtCStr += "\t0x" + v(words.pos & 65535).toString(16) + ",0x" + v(words.ctl & 65535).toString(16) + "\t// control words\n";
+					sprtCStr += "\t0x" + v(words.pos & 65535).toString(16) + ",0x" + v(words.ctl & 65535).toString(16) + ",\t// control words\n";
 					words = genSpriteCtrlWords(coveredWidth + sprtScrX, coveredHeight + sprtScrY, sprtH, attached);
 					sprtAttachedStr += "\tdc.w\t$" + v(words.pos & 65535).toString(16) + ", $" + v(words.ctl & 65535).toString(16) + "\t; control words\n";
-					sprtAttachedCStr += "\t0x" + v(words.pos & 65535).toString(16) + ",0x" + v(words.ctl & 65535).toString(16) + "\t// control words\n";
+					sprtAttachedCStr += "\t0x" + v(words.pos & 65535).toString(16) + ",0x" + v(words.ctl & 65535).toString(16) + ",\t// control words\n";
 					data = new Uint8Array(4 * bitplaneHeight + 4);
 					data.fill(0);
 					data1 = new Uint8Array(4 * bitplaneHeight + 4);
@@ -276,8 +276,13 @@ function saveSprite(_saveWindow) {
 				sprtCStr += "0x"+TwoCharStringHEX(w);
 				data[writeIndex++] = w;
 				w = writeSpr0High & 0xff;
+				
 				sprtStr += TwoCharStringHEX(w)+"\n";
-				sprtCStr += TwoCharStringHEX(w)+"\n";
+				sprtCStr += TwoCharStringHEX(w);
+				if (lineIndex !== sprtH-1)
+					sprtCStr += ",";
+				sprtCStr += "\n";
+
 				data[writeIndex++] = w;
 
 				sprtAttachedStr += "\tdc.w\t";
@@ -296,7 +301,11 @@ function saveSprite(_saveWindow) {
 				data1[writeIndex1++] = w;
 				w = writeSpr1High & 0xff;
 				sprtAttachedStr += TwoCharStringHEX(w)+"\n";
-				sprtAttachedCStr += TwoCharStringHEX(w)+"\n";
+
+				sprtAttachedCStr += TwoCharStringHEX(w);
+				if (lineIndex !== sprtH-1)
+					sprtAttachedCStr += ",";
+				sprtAttachedCStr += "\n";
 				data1[writeIndex1++] = w;
 			}
 			if (saveSession) {
@@ -847,10 +856,10 @@ function savePalette(_asText){
 			saveTextFileHere = true;
 		}
 		if (mode === "palC") {
-			asC = "//\tcopperlist for: " + export_fileName + "\n";
+			asC = "//\palette for: " + export_fileName + "\n";
 			var d = new Date();
 			asC += "//\t" +  d.toString() + "\n";
-			asC += "unsigned short copperlist[] = {\n";
+			asC += "unsigned short palette[] = {\n";
 			saveTextFileHere = true;
 		}
 		var save2Clipboard = false;
