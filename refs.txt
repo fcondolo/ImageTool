@@ -1,3 +1,0 @@
-https://github.com/leeoniya/RgbQuant.js/
-https://jariz.github.io/vibrant.js/
-https://github.com/lokesh/color-thief/

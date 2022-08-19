@@ -111,7 +111,10 @@ function saveSprite(_saveWindow) {
 
 	var d = new Date();
 	var singleBinFAT = ";\tSprites export from file: " +  export_fileName + "\n";
-	singleBinFAT += ";" +  d.toString() + "\n\n;Sprites offsets:\n";
+	singleBinFAT += ";" +  d.toString() + "\n";
+	singleBinFAT += "\tifnd    SPRITES_FAT_I\n";
+	singleBinFAT += "\tSPRITES_FAT_I\tEQU\t1\n";
+	singleBinFAT += "SPRITE_HEIGHT\tEQU\t" +  _saveWindow.w.toString() + "\n\n;Bob offsets:\n";
 	
 	var save2Clipboard = false;
 	var mode2 = document.getElementById("sprtSaveTo").value;
@@ -390,8 +393,9 @@ if (saveSession)
 			var blob = new Blob([data], {type: "application/octet-stream"});
 			var fileName = sprtName + ".bin";
 			saveAs(blob, fileName);
+			singleBinFAT += "\tendc\n";
 			var blob = new Blob([singleBinFAT], { type: "text/plain;charset=utf-8" });
-			var fileName = sprtName + "_FAT.asm";
+			var fileName = sprtName + "_FAT.i";
 			saveAs(blob, fileName);
 		}	
 	}
@@ -663,7 +667,7 @@ function saveBobs(_saveWindow) {
 		}
 		singleBinFAT += "\n"+ bobName + "_END\tEQU\t" + singleWriteIndex;
 		var blob = new Blob([singleBinFAT], { type: "text/plain;charset=utf-8" });
-		var fileName = bobName + "_FAT.asm";
+		var fileName = bobName + "_FAT.i";
 		saveAs(blob, fileName);
 
 		var fileName2 = bobName + ".bin";
