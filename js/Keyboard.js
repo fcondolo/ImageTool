@@ -34,25 +34,17 @@ function keyUp(event) {
         case 46: onEditorDel(); break; // del
 
         // Numbers
-	    case 48: setElemValue('grabMode', 'grabmode_none'); break; // 0
-	    case 49: 	{
-            if (SHIFT) {
-                var zoom = getElemInt10("zoom");
-                if (zoom < 8) {
-                    zoom++;
-                    setElemValue("zoom",zoom);
-                }    
-            } else setElemValue('grabMode', 'grabmode_1px'); break; // 1
-        }
-	    case 50: setElemValue('grabMode', 'grabmode_2px'); break; // 2
-	    case 51: setElemValue('grabMode', 'grabmode_4px'); break; // 4
-	    case 52: setElemValue('grabMode', 'grabmode_8px'); break; // 8
-	    case 53: setElemValue('grabMode', 'grabmode_16px'); break; // 16
-	    case 54: setElemValue('grabMode', 'grabmode_32px'); break; // 32
+	    case 48: break; // 0
+	    case 49: break; // 1
+	    case 50: break; // 2
+	    case 51: break; // 4
+	    case 52: break; // 8
+	    case 53: break; // 16
+	    case 54: break; // 32
 
         // Alphabet
         case 65: break; // a
-        case 66: window.location.href = "#saveBobs"; break; // b
+        case 66: break; // b
         case 67:
             if (CTRL) {
                 // copy
@@ -72,36 +64,24 @@ function keyUp(event) {
 	    case 80: break; // p
 	    case 81: break; // q
 	    case 82: break; // r
-        case 83: window.location.href = "#saveSprite"; break; // s
+        case 83: break;// s
         case 84: break; // t
         case 85: break; // u
         case 86: break; // v
-        case 87: window.location.href = "#workBench"; break; // w
+        case 87: break; // w
         case 88: break; // x
         case 89: break; // y
         case 90: break; // z
 
         case 107:
         case 171: 	{
-                var zoom = getElemInt10("zoom");
-            if (zoom < 8) {
-                zoom++;
-                setElemValue("zoom",zoom);
-            }
-        }
-        break; // plus
+            cameraZoom *= 1.2;
+        } break; // plus
 
-        case 173:        // minus
+        case 173: {
+        } break;       // minus
         case 109:        // numpad minus
-        case 189: if ((!SHIFT) && (!CTRL)){
-            var zoom = getElemInt10("zoom");
-            if (zoom > 1) {
-                zoom--;
-                setElemValue("zoom",zoom);
-            }
-        }
-        break; // minus
-
+        case 189: cameraZoom = Math.max(1,cameraZoom /= 1.2); break;
         default: console.log("unmapped keycode:" + key); break;
     }
 }

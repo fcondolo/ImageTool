@@ -6,7 +6,9 @@ pixelsPaletteIndex : index in palette of each pixel in the work image
 
 */
 
-var PATH_PTS = [];
+var MYDATA = {
+	lists : []
+};
 
 var chosenFileName = null;
 
@@ -1094,13 +1096,6 @@ function getMousePos(canvas, evt) {
 		x: x,
 		y: y
 	  };
-
-/*	  var ret = rectToGrid(v(x), v(y) , 0, 0);
-
-	return {
-      x: v(ret.x),
-      y: v(ret.y)
-    };*/
 }
 
 function getViewPos(evt) {
@@ -1122,42 +1117,28 @@ var ignoreNextClick;
 function onMouseDown(e) {
 	if (SHIFT || CTRL) 
 		ignoreNextClick = true;
-	if (isInGrabZone(e.clientX, e.clientY)) {
-		if (getElemValue('grabMode') !== 'grabmode_none')
-			viewCanvas.style.cursor = "crosshair";
-		if (grab_state !== "done") {	
-			var grabMode = getElem('grabMode').value;
-			if (grabMode !== "grabmode_none") {
-				grab_state = "progress";
-				var m = getMousePos(viewCanvas,e);
-				grab_startx = m.x;
-				grab_starty = m.y;
-	
-				var elm = getElem('mouseFollow').style;
-				elm.display = "block";
-				setTooltipPos(e,elm);	
-			}
-		}	
-	}
 }
 
 function onMouseUp(e) {
 }
 
 function onMouseMove(e) {
+
 	realMouseCoord.x = e.clientX;
 	realMouseCoord.y = e.clientY;
 	if (isInGrabZone(e.clientX, e.clientY)) {
-		if (grab_state !== "done") {
-			if (getElemValue('grabMode') !== 'grabmode_none')
-				viewCanvas.style.cursor = "crosshair";
-			var grabMode = getElem('grabMode').value;
-			var m = getMousePos(viewCanvas,e);
-			grab_curx = m.x;
-			grab_cury = m.y;
-			var elm = getElem('mouseFollow').style;
-			setTooltipPos(e,elm);	
-		}
+		var elm = getElem('mouseFollow').style;
+		elm.display = "block";
+		setTooltipPos(e,elm);	
+		viewCanvas.style.cursor = "crosshair";
+		var m = getMousePos(viewCanvas,e);
+		grab_curx = m.x;
+		grab_cury = m.y;
+		getElem("mouseCoordLabel").innerHTML = v(m.x) + ", " + v(m.y);
+	}
+	else {
+		var elm = getElem('mouseFollow').style;
+		elm.display = "hidden";
 	}
 }
 
@@ -1177,11 +1158,18 @@ function onMouseClick(e) {
 		}
 		var m = getViewPos(e);
 		let coord = invtransfo.transformPoint(new DOMPoint(m.x, m.y));
-		PATH_PTS.push({
+		if (MYDATA.lists.length === 0) {
+			addNewList("default");
+		}
+
+		let elm = getElem("alllists");
+		MYDATA.lists[elm.selectedIndex].points.push({
 			x : (coord.x) / viewCanvas.width,
 			y : (coord.y) / viewCanvas.height,
 			r: getElemInt10('bobsize')
 		});
+
+		refreshPointsList();
 	}
 }
 
@@ -1196,9 +1184,6 @@ function editorOnEsc() {
 		viewCanvas.style.cursor = "default";
 	exitGrab();
 	getElem('addFrame').style.display = "none";
-//	setElemValue('viewShow', 'viewShow_normal');
-//	setElemValue('grabMode','grabmode_none');
-//	closePreview();
 	inGrabContext = false;
 }
 
@@ -1211,28 +1196,6 @@ function grabToView() {
 
 
 
-function rectToGrid(_x,_y,_w,_h) {
-	var zoom = cameraZoom;//getElemInt10("zoom");
-	var grabMode = getElem('grabMode').value;
-	var step = 1;
-	if (grabMode === "grabmode_2px")
-		step = 2;
-	else if (grabMode === "grabmode_4px")
-	step = 4;
-	else if (grabMode === "grabmode_8px")
-		step = 8;
-	else if (grabMode === "grabmode_16px")
-		step = 16;
-	else if (grabMode === "grabmode_32px")
-		step = 32;
-		
-	var x = clampCoord(v(_x/zoom),step);
-	var y = clampCoord(v(_y/zoom),step);
-	var w = clampCoord(v(_w/zoom),step);
-	var h = clampCoord(v(_h/zoom),step);
-
-	return {x:x,y:y,w:w,h:h};
-}
 
 function updateXportValues() {
 	inGrabContext = true;
@@ -1850,4 +1813,39 @@ function postPaletteUpdate() {
 	workImageData.data = workImagePixels;
 	workContext.putImageData(workImageData, 0, 0);
 	refreshPaletteInfo();	
+}
+
+
+function refreshLists() {
+	let elm = getElem("alllists");
+	let val = "";
+	for (var i = 0; i < MYDATA.lists.length; i++) {
+		const lst = MYDATA.lists[i];
+		val += '<option value="' + lst.name +'">' + lst.name + '</option>';
+	}
+	elm.innerHTML = val;
+	elm.selectedIndex = MYDATA.lists.length-1;
+	refreshPointsList();
+}
+
+
+function refreshPointsList() {
+	const elm = getElem("ptslist");
+	const lst = MYDATA.lists[getElem("alllists").selectedIndex].points;
+	elm.size = Math.min(20,lst.length);
+	let content = "";
+	for (let i = 0; i < lst.length; i++) {
+		const s =  v(lst[i].x * workCanvas.width) + ", " + v(lst[i].y * workCanvas.height);
+		content += '<option value="' + i + '"> ' + s + ' </option>';
+	}
+	elm.innerHTML = content;
+}
+
+function addNewList(_name) {
+	if (_name === null)
+		_name = getElemValue("listname");
+	if (_name.length < 1)
+		_name = "default";
+	MYDATA.lists.push({name: _name, points:[]});
+	refreshLists();
 }

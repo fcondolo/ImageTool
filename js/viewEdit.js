@@ -1,3 +1,4 @@
+
 cameraOffset = { x: 0, y: 0 };
 zoomDestCoord = { x: 0, y: 0 }; // normalized, relative to center
 cameraZoom = 1;
@@ -51,12 +52,17 @@ function buildViewImage(_time) {
 	invtransfo = viewContext.getTransform();
 	invtransfo.invertSelf();
 
-	for (var i = 0; i < PATH_PTS.length; i++) {
-		let coord = {x:PATH_PTS[i].x * destW,y:PATH_PTS[i].y * destH};
-		var r = PATH_PTS[i].r * cameraZoom;
-		viewContext.beginPath();
-		viewContext.arc(coord.x, coord.y, r, 0, 2 * Math.PI);
-		viewContext.fill();
+	const index = getElem("alllists").selectedIndex;
+	if (index >= 0 && index < MYDATA.lists.length) {
+		const PATH_PTS = MYDATA.lists[index].points;
+
+		for (var i = 0; i < PATH_PTS.length; i++) {
+			let coord = {x:PATH_PTS[i].x * destW,y:PATH_PTS[i].y * destH};
+			var r = PATH_PTS[i].r * cameraZoom;
+			viewContext.beginPath();
+			viewContext.arc(coord.x, coord.y, r, 0, 2 * Math.PI);
+			viewContext.fill();
+		}	
 	}
 
 	return;
