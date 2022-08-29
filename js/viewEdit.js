@@ -1,135 +1,210 @@
+cameraOffset = { x: 0, y: 0 };
+zoomDestCoord = { x: 0, y: 0 }; // normalized, relative to center
+cameraZoom = 1;
+
+
+isDragging = false;
+dragStart = { x: 0, y: 0 };
+
+initialPinchDistance = null;
+lastZoom = cameraZoom;
+viewmouse = { x: 0, y: 0 };
+imagezone = {x:0,y:0,w:0,h:0};
+
+invtransfo = null;
+
+MAX_ZOOM = 5
+MIN_ZOOM = 0.1
+SCROLL_SENSITIVITY = 0.0005
+
+
 
 function buildViewImage(_time) {
 	if (!viewCanvas)
 		return;
 
-	var thisView = getCurrentView();
-	var zoom = v(parseInt(document.getElementById("zoom").value, 10));
-	var w = thisView.w * zoom;
-	var h = thisView.h * zoom;
-	viewCanvas.width = w;
-	viewCanvas.height = h;
-	viewContext.width = w;
-	viewContext.height = h;
-	viewContext.imageSmoothingEnabled = false;
-	viewContext.drawImage(workCanvas, 0, 0, thisView.w, thisView.h, 0, 0, w, h);
 
-	var viewShow = document.getElementById('viewShow').value;
-	if (viewShow !== "viewShow_normal") {
-		var ctx = viewContext;
-		alpha = 0.6 + 0.3*Math.abs(Math.sin(_time));
-		var stroke = "rgba(0, 255, 0, " + alpha + ")";
-		ctx.strokeStyle = stroke;
-		ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
-		if (grab_state === "null") {
-			if (viewShow === "viewShow_sprites") {
-				showSprites(_time, zoom, w, h);
-			}
-			if (viewShow === "viewShow_bobs") {
-				showBobs(_time, zoom, w, h);
-			}
-		}
+	var thisView = getCurrentView();
+	var w = thisView.w;
+	var h = thisView.h;
+	var ratio = h/w;
+	var neededW = workCanvas.width * cameraZoom;
+	var neededH = workCanvas.height * cameraZoom;
+	var maxW = window.innerWidth * 0.8;
+	var maxH = ratio*maxW;
+	destW = Math.min(neededW,maxW);
+	destH = Math.min(neededH,maxH);
+
+	viewCanvas.width = destW;
+	viewCanvas.height = destH;
+	viewContext.width = destW;
+	viewContext.height = destH;
+	viewContext.imageSmoothingEnabled = false;
+
+
+	viewContext.resetTransform();
+	viewContext.translate(destW / 2, destH / 2 )
+    viewContext.scale(cameraZoom, cameraZoom)
+    viewContext.translate( -destW / 2 + cameraOffset.x, -destH / 2 + cameraOffset.y )
+	viewContext.drawImage(workCanvas, 0, 0, workCanvas.width, workCanvas.height, 0, 0, destW, destH);
+
+	invtransfo = viewContext.getTransform();
+	invtransfo.invertSelf();
+
+	for (var i = 0; i < PATH_PTS.length; i++) {
+		let coord = {x:PATH_PTS[i].x * destW,y:PATH_PTS[i].y * destH};
+		var r = PATH_PTS[i].r * cameraZoom;
+		viewContext.beginPath();
+		viewContext.arc(coord.x, coord.y, r, 0, 2 * Math.PI);
+		viewContext.fill();
 	}
 
-	showGrab(_time, zoom);
+	return;
+
+	let topLeftView = invtransfo.transformPoint(new DOMPoint(0, 0));
+	let bottomRightView = invtransfo.transformPoint(new DOMPoint(destW-1, destH-1));
+	let topLeftWork = {x:topLeftView.x/destW*workCanvas.width, y:topLeftView.y/destH*workCanvas.height};
+	let bottomRightWork = {x:bottomRightView.x/destW*workCanvas.width, y:bottomRightView.y/destH*workCanvas.height};
+
+	let zoomSourceCoord = destToSource(zoomDestCoord);
+
+	let topleft = destToSource({x:Math.max(0,-0.5 + zoomDestCoord.x), y:Math.max(0,-0.5 +  zoomDestCoord.y)});
+	let bottomright = destToSource({x:Math.min(1,0.5 + zoomDestCoord.x), y:Math.min(1,0.5 + zoomDestCoord.y)});
+
+	imagezone.x = topleft.x;
+	imagezone.y = topleft.y;
+	imagezone.w = bottomright.x-topleft.x;
+	imagezone.h = bottomright.y-topleft.y;
+
+
+	// show mouse cursor
+	var cx = grab_curx;
+	var cy = grab_cury;
+	var r = getElemInt10('bobsize');
+	viewContext.beginPath();
+	viewContext.arc(cx, cy, r, 0, 2 * Math.PI);
+	viewContext.fill();
+
+	for (var i = 0; i < PATH_PTS.length; i++) {
+		let coord = sourceToDest({x:PATH_PTS[i].x,y:PATH_PTS[i].y});
+		var r = PATH_PTS[i].r * cameraZoom;
+		viewContext.beginPath();
+		viewContext.arc(coord.x + cameraOffset.x, coord.y + cameraOffset.y, r, 0, 2 * Math.PI);
+		viewContext.fill();
+	}
+
+//	showGrab(_time, cameraZoom);
 }
 
 
-function showSprites(_time, zoom, w, h)  {
-	var ctx = viewContext;
-	var thisView = spriteWindow;
 
-	var sprtC = parseInt(document.getElementById('sprtC').value,10);
-	var originalsprtC = sprtC;
-	var maxsprtC = 0;
-	var sprtH = zoom * parseInt(document.getElementById('sprtH').value,10);
-	var sprtW = zoom * 16;
-
-	var startX = thisView.x * zoom;
-	var endX = startX + thisView.w * zoom;
-	var startY = thisView.y * zoom;
-	var endY = startY + thisView.h * zoom;
-	for (var y = startY; y < endY; y += sprtH) {
-		for (var x = startX; x < endX; x += sprtW) {
-			if (sprtC > 0) {
-				ctx.beginPath();
-				ctx.moveTo(x,y);
-				ctx.lineTo(x+sprtW,y);
-				ctx.lineTo(x+sprtW,y+sprtH);
-				ctx.lineTo(x,y+sprtH);
-				ctx.lineTo(x,y);
-				ctx.stroke();			
-				sprtC--;	
-			} else {
-				ctx.fillRect(x,y,sprtW,sprtH);
-			}
-			maxsprtC++;
-		}	
-	}
-	if (originalsprtC > maxsprtC) {
-		document.getElementById('sprtC').value = maxsprtC;
-	}
-	if (startX > 0)
-		ctx.fillRect(0,0,startX-1,viewContext.height);
-	if (endX < viewContext.width)
-		ctx.fillRect(endX,0,viewContext.width-endX,viewContext.height);
-	if (startY > 0)
-		ctx.fillRect(0,0,viewContext.width,startY-1);
-	if (endY < viewContext.height)
-		ctx.fillRect(0,endY,viewContext.width,viewContext.height-endY);
-
-} 
+// Gets the relevant location from a mouse or single touch event
+function getEventLocation(e)
+{
+    if (e.touches && e.touches.length == 1)
+    {
+        return { x:e.touches[0].clientX, y: e.touches[0].clientY }
+    }
+    else if (e.clientX && e.clientY)
+    {
+        return { x: e.clientX, y: e.clientY }        
+    }
+	else alert("WTF");
+}
 
 
 
-function showBobs(_time, zoom, w, h)  {
-	var ctx = viewContext;
-	var thisView = spriteWindow;
-	var startX = thisView.x * zoom;
-	var endX = startX + thisView.w * zoom;
-	var startY = thisView.y * zoom;
-	var endY = startY + thisView.h * zoom;
+function onPointerDown(e)
+{
+	if (!(CTRL && SHIFT)) return;
+    isDragging = true
+    dragStart.x = getEventLocation(e).x/cameraZoom - cameraOffset.x
+    dragStart.y = getEventLocation(e).y/cameraZoom - cameraOffset.y
+}
 
-	var bobW = zoom * parseInt(document.getElementById('bobW').value,10);
-	var bobH = zoom * parseInt(document.getElementById('bobH').value,10);
-	var bobC = parseInt(document.getElementById('bobC').value,10);
-	var originalBobC = bobC;
-	var maxBobC = 0;
-	for (var y = startY; y < endY; y += bobH) {
-		for (var x = startX; x < endX; x += bobW) {
-			if (bobC > 0) {
-				ctx.beginPath();
-				ctx.moveTo(x,y);
-				ctx.lineTo(x+bobW,y);
-				ctx.lineTo(x+bobW,y+bobH);
-				ctx.lineTo(x,y+bobH);
-				ctx.lineTo(x,y);
-				ctx.stroke();			
-				bobC--;	
-			} else {
-				ctx.fillRect(x,y,bobW,bobH);
-			}
-			maxBobC++;
-		}	
-	}
-	if (originalBobC > maxBobC) {
-		document.getElementById('bobC').value = maxBobC;
-	}
-	if (startX > 0)
-		ctx.fillRect(0,0,startX-1,viewContext.height);
-	if (endX < viewContext.width)
-		ctx.fillRect(endX,0,viewContext.width-endX,viewContext.height);
-	if (startY > 0)
-		ctx.fillRect(0,0,viewContext.width,startY-1);
-	if (endY < viewContext.height)
-		ctx.fillRect(0,endY,viewContext.width,viewContext.height-endY);
-} 
+function onPointerUp(e)
+{
+	if (!(CTRL && SHIFT)) return;
+    isDragging = false
+    initialPinchDistance = null
+    lastZoom = cameraZoom
+}
+
+function onPointerMove(e)
+{
+	let mx = getEventLocation(e).x/cameraZoom - dragStart.x;
+	let my = getEventLocation(e).y/cameraZoom - dragStart.y;
+	viewmouse = getMousePos(viewCanvas,e);
+	if (!(CTRL && SHIFT)) return;
+    if (isDragging)
+    {
+        cameraOffset.x = mx;
+        cameraOffset.y = my;
+    }
+}
+
+function handleTouch(e, singleTouchHandler)
+{
+	if (!(CTRL && SHIFT)) return;
+    if ( e.touches.length == 1 )
+    {
+        singleTouchHandler(e)
+    }
+    else if (e.type == "touchmove" && e.touches.length == 2)
+    {
+        isDragging = false
+        handlePinch(e)
+    }
+}
+
+
+function handlePinch(e)
+{
+	if (!(CTRL && SHIFT)) return;
+    e.preventDefault()
+    
+    let touch1 = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+    let touch2 = { x: e.touches[1].clientX, y: e.touches[1].clientY }
+    
+    // This is distance squared, but no need for an expensive sqrt as it's only used in ratio
+    let currentDistance = (touch1.x - touch2.x)**2 + (touch1.y - touch2.y)**2
+    
+    if (initialPinchDistance == null)
+    {
+        initialPinchDistance = currentDistance
+    }
+    else
+    {
+        adjustZoom( null, currentDistance/initialPinchDistance )
+    }
+}
+
+function adjustZoom(zoomAmount, zoomFactor)
+{
+	if (!(CTRL && SHIFT)) return;
+    if (!isDragging)
+    {
+        if (zoomAmount)
+        {
+            cameraZoom += zoomAmount
+        }
+        else if (zoomFactor)
+        {
+            console.log(zoomFactor)
+            cameraZoom = zoomFactor*lastZoom
+        }
+        
+        cameraZoom = Math.min( cameraZoom, MAX_ZOOM )
+        cameraZoom = Math.max( cameraZoom, MIN_ZOOM )
+        
+        console.log(zoomAmount)
+    }
+}
+
 
 function showGrab(_time, zoom)  {
-	var zoom = v(parseInt(document.getElementById("zoom").value, 10));
+	var zoom = cameraZoom;
 	var ctx = viewContext;
-
-
 
 	if (grab_startx < 0) grab_startx = 0;
 	if (grab_starty < 0) grab_starty = 0;
@@ -158,34 +233,36 @@ function showGrab(_time, zoom)  {
 	var b = 255 * Math.abs(Math.sin(_time * 4));
 	var stroke = "rgba("+rd+","+g+","+b+"," + alpha + ")";
 	ctx.strokeStyle = stroke;
-
-	if (grab_state === "progress") {
-		if (grabMode !== "grabmode_none") {	
-			document.getElementById("mouseCoordLabel").innerHTML = r.x + ", " + r.y + ", " + Math.abs(r.w) + ", " + Math.abs(r.h);
-			ctx.strokeRect(minx, miny, maxx-minx, maxy-miny);
-		}	
-	} else if (grab_state === "done") {
-		ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
-		ctx.fillRect(0,0,minx,ctx.height);
-		ctx.fillRect(maxx,0,ctx.width-maxx,ctx.height);
-		ctx.fillRect(0,0,ctx.width,miny);
-		ctx.fillRect(0,maxy,ctx.width,ctx.height-maxy);
-		ctx.strokeRect(minx, miny, maxx-minx, maxy-miny);
-	} else  if (grab_state === "null") {
-		if (getElemValue('grabMode') !== 'grabmode_none') {
-			var rect = viewCanvas.getBoundingClientRect();
-			if (realMouseCoord.x >= rect.x && realMouseCoord.y >= rect.y && realMouseCoord.x < rect.x + rect.width && realMouseCoord.y < rect.y + rect.height) {
-				var cx = v(grab_curx * zoom);
-				var cy = v(grab_cury * zoom);
+	ctx.fillStyle = stroke;
 	
-				ctx.beginPath();
-				ctx.moveTo(cx, 0);
-				ctx.lineTo(cx, ctx.height);
-				ctx.moveTo(0, cy);
-				ctx.lineTo(ctx.width, cy);
-				ctx.stroke();	
-			}	
+
+	for (var i = 0; i < PATH_PTS.length; i++) {
+		var cx = v(PATH_PTS[i].x * zoom) - cameraOffset.x * zoom;
+		var cy = v(PATH_PTS[i].y * zoom) - cameraOffset.y * zoom;
+		var r = PATH_PTS[i].r * zoom;
+		ctx.beginPath();
+		ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+		ctx.fill();
+		if (i > 0) {
+			let count = getElemInt10('interp');
+			if (count > 0) {
+				let prevx = v(PATH_PTS[i-1].x * zoom);
+				let prevy = v(PATH_PTS[i-1].y * zoom);
+				let prevr = PATH_PTS[i-1].r * zoom;
+				let slopex = (cx - v(PATH_PTS[i-1].x * zoom)) / count;
+				let slopey = (cy - v(PATH_PTS[i-1].y * zoom)) / count;
+				let sloper = (r - PATH_PTS[i-1].r * zoom) / count;
+				for (var j = 0; j < count; j++) {
+					prevx += slopex;
+					prevy += slopey;
+					prevr += sloper;
+					ctx.beginPath();
+					ctx.arc(prevx, prevy, prevr, 0, 2 * Math.PI);
+					ctx.fill();
+				}
+			}
 		}
 	}
 
 } 
+

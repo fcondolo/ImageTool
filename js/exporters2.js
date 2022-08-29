@@ -113,8 +113,8 @@ function saveSprite(_saveWindow) {
 	var singleBinFAT = ";\tSprites export from file: " +  export_fileName + "\n";
 	singleBinFAT += ";" +  d.toString() + "\n";
 	singleBinFAT += "\tifnd    SPRITES_FAT_I\n";
-	singleBinFAT += "\tSPRITES_FAT_I\tEQU\t1\n";
-	singleBinFAT += "SPRITE_HEIGHT\tEQU\t" +  _saveWindow.w.toString() + "\n\n;Bob offsets:\n";
+	singleBinFAT += "SPRITES_FAT_I\tEQU\t1\n";
+	singleBinFAT += "SPRITE_HEIGHT\tEQU\t" +  _saveWindow.w.toString() + "\n\n;Sprite offsets:\n";
 	
 	var save2Clipboard = false;
 	var mode2 = document.getElementById("sprtSaveTo").value;

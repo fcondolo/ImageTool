@@ -6,17 +6,12 @@
 
     <link rel="stylesheet" type="text/css" href="css/kickstart.css" media="all" />                  <!-- KICKSTART -->
     <link rel="stylesheet" type="text/css" href="style.css" media="all" />                          <!-- CUSTOM STYLES -->
-    <link rel="stylesheet" type="text/css" href="js/3rdparty/css/colpick.css" media="all" />            <!-- COLOR PICKER -->
-
+   
     <script type="text/javascript" src="js/3rdparty/jquery.min.js"></script>
-    <script type="text/javascript" src="js/3rdparty/RgbQuant/src/rgbquant.js"></script>
     <script type="text/javascript" src="js/3rdparty/FileSaver/FileSaver.js"></script>
-    <script type="text/javascript" src="js/3rdparty/colpick.js"></script>
-    <script type="text/javascript" src="js/3rdparty/Sortable/Sortable.js"></script>
     <script type="text/javascript" src="js/kickstart.js"></script>                                  <!-- KICKSTART -->
     <script type="text/javascript" src="js/dragdrop.js"></script>
     <script type="text/javascript" src="js/Keyboard.js"></script>
-    <script type="text/javascript" src="js/gen_rgb.js"></script>
     <script type="text/javascript" src="js/viewEdit.js"></script>
     <script type="text/javascript" src="js/exporters2.js"></script>
     <script type="text/javascript" src="js/main.js"></script>
@@ -25,15 +20,16 @@
 
 
       <body onload="onLoad()" onkeydown="keyDown(event)" onkeyup="keyUp(event)">
-          <center><h3><i>Original Image</i></h3></center>
+          <center><h3><i>Reference Image</i></h3></center>
               <center>
+                <!--
                   <form action="help.html"><input type="submit" value="Help Page" /></form>
                   <br><a href="https://www.pouet.net/prod.php?which=90167">Leave a comment on Pouet!</a>
-                  <br>
+                  <br> -->
                   <img id='refImg' src="data/refImg.png">
                   <br><input type="file" id="file-input"/>
                   <br /><br />            
-                  Target Platform:
+                <!--  Target Platform:
                   <select id="platform"onchange="onPlatformChosen()">
                     <option value=target_OCS>Amiga OCS</option>
                     <option value=target_nothing>--- coming soon ---</option>
@@ -42,7 +38,7 @@
                     <option value=target_CPC>Amstrad CPC</option>
                     <option value=target_C64>Commodore 64</option>
                   </select>
-                  <br>
+                  <br> 
                   HTML to Platform color conversion:
                   <select id="conversionAlgo" onchange="onDrop()">
                     <option value=clampColor selected="selected">Clamp Color</option>
@@ -54,6 +50,7 @@
                   <br>&nbsp;&nbsp;&nbsp;Crop W&nbsp;<input type="text" id="cropW" name="cropW" onchange="onCrop()" size="8">
                   &nbsp;&nbsp;&nbsp;Crop H&nbsp;<input type="text" id="cropH" name="cropH" onchange="onCrop()" size="8">
                   <br><button type="button" class="fa fa-scissors" onclick="onDoCrop()"> Crop</button><button type="button" class="fa fa-magic" onclick="onDrop()"> Reset</button><br>
+                  -->
                   <canvas id='workCanvas'></canvas>
               </center>
               <hr>
@@ -61,6 +58,7 @@
 
               <center><h3><i>Work Bench</i></h3></center>
               <div id="workBench" class="col_3" style='background-color:rgba(0,0,0,0);'>
+                <!--
                 <br><button type="button" class="fa fa-arrow-circle-up" onclick="pal_ascending();"> Ascending</button>
                 <button type="button" class="fa fa-arrow-circle-down" onclick="pal_descending();"> Descending</button><br>
                 <br>lock color 0&nbsp;<input type="checkbox" id="lockclr0" name="lockclr0" onchange="onLockCol0()"></br>
@@ -72,23 +70,29 @@
                   </select>
                 <div id='paletteColors' style='background-color:rgba(200,200,200,0.5);'>
                 </div>
+                -->
               </div>
               <div class="col_9" style='background-color:rgba(0,0,0,0);'>
-                Zoom&nbsp;<input type="range" min="1" max="8" value="2" class="slider" id="zoom" oninput="buildViewImage()">
+                <!-- Zoom&nbsp;<input type="range" min="1" max="8" value="2" class="slider" id="zoom" oninput="buildViewImage()">
+                -->
+                BobSize&nbsp;<input type="range" min="1" max="32" value="2" class="slider" id="bobsize">
+                Interp&nbsp;<input type="range" min="0" max="32" value="0" class="slider" id="interp">
+                <!--
                 &nbsp;&nbsp;&nbsp;<label for="colorcycle">Color Cycle: </label><input type="range" min="0" max="511" value="1" class="slider" id="colorcycle" oninput="doColorCycle()" onmousedown="startColorCycle()" ontouchstart="startColorCycle()" onmouseup="endColorCycle()" ontouchend="endColorCycle()"  onfocusout="endColorCycle()">
                 <br>show:&nbsp;<select id="viewShow" onchange="buildViewImage()">
                   <option value=viewShow_normal>normal</option>
                   <option value=viewShow_sprites>sprites</option>
                   <option value=viewShow_bobs>bobs</option>
                   </select>
-                  &nbsp;&nbsp;grab:&nbsp;<select id="grabMode">
-                    <option value=grabmode_none>no grab</option>
-                    <option value=grabmode_1px>grab 1px</option>
-                    <option value=grabmode_2px>grab 2px</option>
-                    <option value=grabmode_4px>grab 4px</option>
-                    <option value=grabmode_8px>grab 8px</option>
-                    <option value=grabmode_16px>grab 16px</option>
-                    <option value=grabmode_32px>grab 32px</option>
+                -->
+                &nbsp;&nbsp;snap:&nbsp;<select id="grabMode">
+                    <option value=grabmode_none>no snap</option>
+                    <option selected value=grabmode_1px>1px</option>
+                    <option value=grabmode_2px>2px</option>
+                    <option value=grabmode_4px>4px</option>
+                    <option value=grabmode_8px>8px</option>
+                    <option value=grabmode_16px>16px</option>
+                    <option value=grabmode_32px>32px</option>
                 </select>
                 <!-- <button type="button" onclick="popView()">Back</button><br> -->
                 <br><canvas id='viewCanvas' type="overflow:scroll;"></canvas>

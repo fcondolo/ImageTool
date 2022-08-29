@@ -6,6 +6,8 @@ pixelsPaletteIndex : index in palette of each pixel in the work image
 
 */
 
+var PATH_PTS = [];
+
 var chosenFileName = null;
 
 // All variables for the source image (original image given by the user)
@@ -259,17 +261,20 @@ function isColor0Locked() {
 }
 
 function onLockCol0() {
+	/*
 	if (!getElem('lockclr0').checked) {
 		if (isColor0Locked())
 			global_palette.shift();
 	}
 	onDoCrop();
+	*/
 }
 
 /************************************************ 
 CROPPING
 ************************************************/
 function readCropValues() {
+	/*
 	cropX = parseInt(getElem('cropX').value,10);
 	cropY = parseInt(getElem('cropY').value,10);
 	cropW = parseInt(getElem('cropW').value,10);
@@ -287,6 +292,7 @@ function readCropValues() {
 	}
 
 	resetViewsToCropValues();
+	*/
 }
 
 function writeCropValues(x,y,w,h) {
@@ -306,11 +312,11 @@ function writeCropValues(x,y,w,h) {
 	if (cropW < 0) cropW = 0;
 	if (cropH < 0) cropH = 0;
 
-	getElem('cropX').value = cropX;
+/*	getElem('cropX').value = cropX;
 	getElem('cropY').value = cropY;
 	getElem('cropW').value = cropW;
 	getElem('cropH').value = cropH;
-
+*/
 	resetViewsToCropValues();
 }
 
@@ -404,7 +410,7 @@ function onDrop(_fname) {
 
 	//getElem("refImgName").innerHTML = "file: " + sourceImage.file.name + " - size: " + w + "x" + h + " pixels.";
 	getElem('sprtName').value = export_fileName;
-	getElem('lockclr0').checked = false;
+//	getElem('lockclr0').checked = false;
 	getElem('bobC').value = 1;
 	getElem('bobName').value = export_fileName;
 	getElem('bobIncludePal').checked = false;
@@ -425,7 +431,7 @@ function onDrop(_fname) {
 		sourceCanvas = document.createElement('canvas');
 		sourceCanvas.id = "sourceCanvas";
 	}
-	sourceCanvas.width = w;
+ 	sourceCanvas.width = w;
 	sourceCanvas.height = h;
 	sourceContext = sourceCanvas.getContext('2d');
 	sourceContext.drawImage(sourceImage,0,0,w,h);
@@ -437,16 +443,29 @@ function onDrop(_fname) {
 	viewCanvas = getElem('viewCanvas');
 	viewContext = viewCanvas.getContext('2d');
 
+	viewCanvas.addEventListener('mousedown', onPointerDown)
+	viewCanvas.addEventListener('touchstart', (e) => handleTouch(e, onPointerDown))
+	viewCanvas.addEventListener('mouseup', onPointerUp)
+	viewCanvas.addEventListener('touchend',  (e) => handleTouch(e, onPointerUp))
+	viewCanvas.addEventListener('mousemove', onPointerMove)
+	viewCanvas.addEventListener('touchmove', (e) => handleTouch(e, onPointerMove))
+	viewCanvas.addEventListener( 'wheel', (e) => adjustZoom(e.deltaY*SCROLL_SENSITIVITY))
+
+	zoomDestCoord.x = 0; // relative to center, normalized
+	zoomDestCoord.y = 0;
+
 	buildWorkImage();
 	buildPaletteFromWorkImage();
 	buildPixelsPaletteIndexes();
+
+
 	buildViewImage(0);
 
 	getElem('sprtC').value = v(w / 16);
 }
 
 function buildWorkImage() {
-    var algo = getElem("conversionAlgo").value;
+    var algo = "nearestColor" ;// getElem("conversionAlgo").value;
     if (algo === "nearestColor") color_convert_method = remapRGBtoAmiga_nearest;
     else if (algo === "clampColor") color_convert_method = remapRGBtoAmiga_clamp;
     else alert("unknown algo: " + algo);
@@ -484,6 +503,7 @@ function clampCoord(coord, clamp) {
 }
 
 function buildPaletteFromWorkImage() {
+	/*
 	global_palette = [];
 	if (getElem('lockclr0').checked)
 		global_palette.push({r:CONST_LOCK0_COLOR.r,g:CONST_LOCK0_COLOR.g,b:CONST_LOCK0_COLOR.b});	// impossible color to make sure it remaps to no pixel
@@ -501,9 +521,11 @@ function buildPaletteFromWorkImage() {
 		}
 	}
 	refreshPaletteInfo();
+	*/
 }
 
 function refreshPaletteInfo() {
+	/*
 	getElem('xport1').checked = false;
 	getElem('xport2').checked = false;
 	getElem('xport3').checked = false;
@@ -550,10 +572,11 @@ function refreshPaletteInfo() {
 	} else {
 		getElem('paletteColors').innerHTML = "<b>"+global_palette.length+": too many colors for palette editor</b><br>";
 	}
-
+*/
 }
 
 function buildPixelsPaletteIndexes() {
+	/*
 	pixelsPaletteIndex = new Uint8Array(cropW * cropH);
 	var write = 0;
 	var read = 0;
@@ -566,6 +589,7 @@ function buildPixelsPaletteIndexes() {
 			pixelsPaletteIndex[write++] = getPaletteIndex(ir, ig, ib, false);			
 		}
 	}
+	*/
 }
 
 
@@ -583,6 +607,7 @@ function buildPixelsPaletteIndexes() {
 	
 
 function getPaletteIndex(_r,_g,_b, _autoAddMissing) {
+	/*
 		for (var i = 0; i < global_palette.length; i++) {
 			if ((global_palette[i].r == _r)&&(global_palette[i].g == _g)&&(global_palette[i].b == _b))
 				return i;
@@ -594,6 +619,7 @@ function getPaletteIndex(_r,_g,_b, _autoAddMissing) {
 			alert("getPaletteIndex: color not found");
 			return -1;
 		}
+		*/
 }
 
 function findNearesIndexInPalette(_r,_g,_b) {
@@ -1050,8 +1076,8 @@ function isInGrabZone(x,y) {
 	if (!rect)
 		return false;
 
-	if (grab_state === "progress")
-		return true;
+//	if (grab_state === "progress")
+//		return true;
 	
 	if (x < rect.left) return false;
 	if (y < rect.top) return false;
@@ -1064,12 +1090,27 @@ function getMousePos(canvas, evt) {
     var rect = canvas.getBoundingClientRect();
 	var x = evt.clientX - rect.left;
 	var y = evt.clientY - rect.top;
-	var ret = rectToGrid(v(x), v(y) , 0, 0);
+	return {
+		x: x,
+		y: y
+	  };
+
+/*	  var ret = rectToGrid(v(x), v(y) , 0, 0);
 
 	return {
       x: v(ret.x),
       y: v(ret.y)
-    };
+    };*/
+}
+
+function getViewPos(evt) {
+    var rect = viewCanvas.getBoundingClientRect();
+	var x = evt.clientX - rect.left;
+	var y = evt.clientY - rect.top;
+	return {
+		x: x,
+		y: y
+	  };
 }
 
 function setTooltipPos(e, d) {
@@ -1077,7 +1118,10 @@ function setTooltipPos(e, d) {
 	d.top = (e.clientY + 10).toString()+"px";
 }
 
+var ignoreNextClick;
 function onMouseDown(e) {
+	if (SHIFT || CTRL) 
+		ignoreNextClick = true;
 	if (isInGrabZone(e.clientX, e.clientY)) {
 		if (getElemValue('grabMode') !== 'grabmode_none')
 			viewCanvas.style.cursor = "crosshair";
@@ -1098,45 +1142,6 @@ function onMouseDown(e) {
 }
 
 function onMouseUp(e) {
-	if (isInGrabZone(e.clientX, e.clientY)) {
-		viewCanvas.style.cursor = "default";
-		if (grab_state !== "done") {	
-			var grabMode = getElem('grabMode').value;
-			if (grabMode !== "grabmode_none") {
-				var m = getMousePos(viewCanvas,e);
-				if (grab_state === "progress") {
-					grab_state = "done";
-					var parent = getElem('grabDone').parentNode.getBoundingClientRect();
-					var elm = getElem('grabDone').style;
-					elm.display = "block";
-					elm.left = (e.clientX - parent.x).toString()+"px";
-					elm.top = (e.clientY - parent.y).toString()+"px";
-				} else {
-					grab_state = "null";
-				}
-				if (grab_state !== "done") {	
-					grab_startx = m.x;
-					grab_starty = m.y;
-				}
-				grab_curx = m.x;
-				grab_cury = m.y;
-				var elm = getElem('mouseFollow').style;
-				elm.display = "none";
-
-				if (grab_curx < grab_startx) {
-					var temp = grab_curx;
-					grab_curx = grab_startx;
-					grab_startx = temp;
-				}
-				if (grab_cury < grab_starty) {
-					var temp = grab_cury;
-					grab_cury = grab_starty;
-					grab_starty = temp;
-				}
-			
-			}	
-		}
-	}
 }
 
 function onMouseMove(e) {
@@ -1157,12 +1162,27 @@ function onMouseMove(e) {
 }
 
 function onMouseClick(e) {
-	if (grab_state !== "done") {
-		grab_state = "null";
-		getElem('mouseFollow').style.display = "none";
+	if (SHIFT && CTRL) return;
+	if (isInGrabZone(e.clientX, e.clientY)) {	
+		if (CTRL) {
+			cameraZoom *= 1.2;
+			return;
+		} else if (SHIFT) {
+			cameraZoom = Math.max(1, cameraZoom/1.2);
+			return;
+		}
+		if (ignoreNextClick) {
+			ignoreNextClick = false;
+		//	return;
+		}
+		var m = getViewPos(e);
+		let coord = invtransfo.transformPoint(new DOMPoint(m.x, m.y));
+		PATH_PTS.push({
+			x : (coord.x) / viewCanvas.width,
+			y : (coord.y) / viewCanvas.height,
+			r: getElemInt10('bobsize')
+		});
 	}
-	if (viewCanvas && viewCanvas.style)
-		viewCanvas.style.cursor = "default";
 }
 
 function exitGrab() {
@@ -1176,9 +1196,9 @@ function editorOnEsc() {
 		viewCanvas.style.cursor = "default";
 	exitGrab();
 	getElem('addFrame').style.display = "none";
-	setElemValue('viewShow', 'viewShow_normal');
+//	setElemValue('viewShow', 'viewShow_normal');
 //	setElemValue('grabMode','grabmode_none');
-	closePreview();
+//	closePreview();
 	inGrabContext = false;
 }
 
@@ -1192,7 +1212,7 @@ function grabToView() {
 
 
 function rectToGrid(_x,_y,_w,_h) {
-	var zoom = getElemInt10("zoom");
+	var zoom = cameraZoom;//getElemInt10("zoom");
 	var grabMode = getElem('grabMode').value;
 	var step = 1;
 	if (grabMode === "grabmode_2px")
@@ -1242,11 +1262,12 @@ function grabToBobs() {
 
 
 function onPlatformChosen() {
-    target_platform = getElem("platform").value;
+/*    target_platform = getElem("platform").value;
 	if (target_platform !== "target_OCS") {
 		setElemValue('platform','target_OCS');
 		//alert("Only Amiga OCS is supported for now. Other platforms are WIP...");
 	}
+	*/
 }
 
 function addFrame() {
