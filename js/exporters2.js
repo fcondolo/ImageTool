@@ -30,6 +30,14 @@ function genSpriteCtrlWords(x,y,h, attached) {
 }
 
 
+function downloadJSON(content, fileName, contentType) {
+	var jsonData = JSON.stringify(content);
+    var a = document.createElement("a");
+    var file = new Blob([jsonData], {type: contentType});
+    a.href = URL.createObjectURL(file);
+    a.download = fileName;
+    a.click();
+}
 
 
 function getChunkyPix(x,y) {

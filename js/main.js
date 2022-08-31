@@ -72,11 +72,11 @@ function viewShow_step(timestamp) {
   }
   const elapsed = timestamp - viewShow_start;
   const delta = timestamp - viewShow_previousTimeStamp;
-
-  if (delta >= 1.0/30.0) {
+  const FPS = 1;
+  if (delta >= FPS) {
 	viewShow_previousTimeStamp = timestamp;
-	anim_timer += 1.0/30.0;
-	buildViewImage(anim_timer * 0.3);
+	anim_timer += FPS;
+	buildViewImage(anim_timer);
   }
   window.requestAnimationFrame(viewShow_step);
 }
@@ -190,7 +190,9 @@ function setElemChecked(_id,_value) {
 }
 
 function onLoad() {
+	precalcSprites();
 	document.getElementById('file-input').addEventListener('change', readSingleFile, false);
+	document.getElementById('file-input2').addEventListener('change', readJSONFile, false);
 	getElem('frames').style.display = 'none';
 	setElemValue('sprtScrX', 0);
 	setElemValue('sprtScrY', 0);
@@ -378,15 +380,6 @@ function onCrop(){
 	getElem('cropH').value = tcropH;
 }
 
-function onDoCrop() {
-	readCropValues();
-
-	global_palette = [];
-	buildWorkImage();
-	buildPaletteFromWorkImage();
-	buildPixelsPaletteIndexes();
-	buildViewImage(0);
-}
 	
 function removeExtension(filename){
     var lastDotPosition = filename.lastIndexOf(".");
@@ -463,7 +456,7 @@ function onDrop(_fname) {
 
 	buildViewImage(0);
 
-	getElem('sprtC').value = v(w / 16);
+	document.getElementById('workBench').scrollIntoView();
 }
 
 function buildWorkImage() {
@@ -1036,39 +1029,7 @@ function doColorCycle(_amount) {
 	postColorChange();
 }
 
-function postColorChange() {
-	var read = 0;
-	var write = 0;
-	for (var y = 0; y < cropH; y++) {
-		for (var x = 0; x < cropW; x++) {
-			var index = pixelsPaletteIndex[read++];
-			workImagePixels[write++] = global_palette[index].r;
-			workImagePixels[write++] = global_palette[index].g;
-			workImagePixels[write++] = global_palette[index].b;
-			workImagePixels[write++] = 255;
-		}
-	}
 
-	workImageData.data = workImagePixels;
-	workContext.putImageData(workImageData, 0, 0);
-
-	refreshPaletteInfo();
-	buildViewImage(0);
-}
-
-function onNewColor(_index) {
-    var iicol = getElem('colorBox_' + _index.toString()).value;
-    while (iicol.charAt(0) === ' ' || iicol.charAt(0) === '#')
-        iicol = iicol.substr(1);
-    var iival = parseInt(iicol, 16);
-    var r = (iival >> 16) & 255;
-    var g = (iival >> 8) & 255;
-    var b = (iival >> 0) & 255;
-    global_palette[_index].r = r;
-    global_palette[_index].g = g;
-    global_palette[_index].b = b;
-    postColorChange();
-}
 
 
 function isInGrabZone(x,y) {
@@ -1187,12 +1148,6 @@ function editorOnEsc() {
 	inGrabContext = false;
 }
 
-function grabToView() {
-	exitGrab();
-	buildViewImage(0);
-	addView(grab_startx, grab_starty, grab_curx - grab_startx, grab_cury - grab_starty, true);
-	buildViewImage(0);
-}
 
 
 
@@ -1338,53 +1293,6 @@ function grabbedToSprites() {
 	window.location.href = "#saveSprite";	
 }
 
-function onBobW() {
-	if (inGrabContext) {
-		var hCount = v(spriteWindow.w / getElemInt10('bobW'));
-		var vCount = v(spriteWindow.h / getElemInt10('bobH'));
-		setElemValue('bobC', hCount * vCount);
-	} else {
-		var hCount = v(cropW / getElemInt10('bobW'));
-		var vCount = v(cropH / getElemInt10('bobH'));
-		setElemValue('bobC', hCount * vCount);
-	}
-	buildViewImage();	
-	previewBobs(true);
-}
-
-function onBobH() {
-	if (inGrabContext) {
-		var hCount = v(spriteWindow.w / getElemInt10('bobW'));
-		var vCount = v(spriteWindow.h / getElemInt10('bobH'));
-		setElemValue('bobC', hCount * vCount);
-	} else {
-		var hCount = v(cropW / getElemInt10('bobW'));
-		var vCount = v(cropH / getElemInt10('bobH'));
-		setElemValue('bobC', hCount * vCount);
-	}
-	buildViewImage();	
-	previewBobs(true);
-}
-
-function onBobC() {
-	buildViewImage();	
-	previewBobs(true);
-}
-
-function onSprtH() {
-	if (inGrabContext) {
-		var hCount = v(spriteWindow.w / 16);
-		var vCount = v(spriteWindow.h / getElemInt10('sprtH'));
-		setElemValue('sprtC', hCount * vCount);
-	}
-	buildViewImage();	
-	previewSprites(true);
-}
-
-function onSprtC() {
-	buildViewImage();	
-	previewSprites(true);
-}
 
 function onGrabCancelButton() {
 	exitGrab();
@@ -1405,6 +1313,20 @@ function readSingleFile(e) {
 	reader.readAsDataURL(file);
 }
   
+function readJSONFile(e) {
+	var file = e.target.files[0];
+	if (!file) {
+	  return;
+	}
+	const fname = e.target.files[0].name;
+	var reader = new FileReader();
+	reader.onload = function(e) {
+		MYDATA = JSON.parse(e.target.result);
+		setTimeout(function() { refreshLists(); }, 500);
+	};
+	reader.readAsText(file);
+}
+
 function previewSprites(_updateOnly) {
 	setElemValue('viewShow','viewShow_sprites');
 	

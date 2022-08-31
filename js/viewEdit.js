@@ -18,12 +18,69 @@ MAX_ZOOM = 5
 MIN_ZOOM = 0.1
 SCROLL_SENSITIVITY = 0.0005
 
+var sprtCoord = [];
+const prtcle_count = 32;
+const prtcle_rad = 4;
+const prtcle_frames_count = 16;
+const twirl_centerx = 100;
+const twirl_centery = 100;
 
 
+function precalcSprites() {
+	const twirl_totalAngle = Math.PI * 4;
+	var sprtyofs = [];
+
+	const prtcle_step = twirl_totalAngle / prtcle_count;
+	const rad_incr = 1.15*prtcle_count/35;
+
+	for (var i = 0; i < prtcle_count; i++)
+		sprtyofs[i] = 0;	
+
+	for (var frame = 0; frame < prtcle_frames_count; frame++) {
+		let twirl_rad = 20 + rad_incr * frame;
+		let prtcle_angle = (prtcle_step/prtcle_frames_count)*frame;
+
+		// GENERATE SPRITES COORD
+		for (var i = 0; i < prtcle_count; i++) {
+			let x = Math.cos(prtcle_angle) * twirl_rad;
+			let y = Math.sin(prtcle_angle) * twirl_rad + sprtyofs[i];
+			sprtCoord.push(x);
+			sprtCoord.push(y);
+			prtcle_angle += prtcle_step;
+			twirl_rad *= rad_incr;
+		}
+	
+	
+		// AVOID MULTIPLE SPRITES ON THE SAME LINE
+		let ofs = frame * 2 * prtcle_count;
+		let fine = true;
+		do {
+			fine = true;
+			for (var i = 0; i < prtcle_count; i++) {
+				for (var j = 0; j < i; j++) {
+					let sprite1_bottom = sprtCoord[ofs + i*2+1] + prtcle_rad/2;
+					let sprite2_top = sprtCoord[ofs + j*2+1] - prtcle_rad/2;
+					if (Math.abs(sprite2_top - sprite1_bottom) < 1) {
+						sprtyofs[ofs + j]++;
+						sprtCoord[ofs + j*2+1]++;
+						fine = false;
+						break;
+					}
+				}		
+			}	
+		} while (!fine);
+	
+		// TODO  : SORT FRAME VERTICALLY	
+	}
+}
+
+var curSprtFrame1 = 0
+var curSprtFrame2 = prtcle_frames_count/4;
+var curSprtFrame3 = prtcle_frames_count/4*2;
+var curSprtFrame4 = prtcle_frames_count/4*3;
 function buildViewImage(_time) {
 	if (!viewCanvas)
 		return;
-
 
 	var thisView = getCurrentView();
 	var w = thisView.w;
@@ -66,43 +123,37 @@ function buildViewImage(_time) {
 	}
 
 	return;
+	//DRAW SPRITES
+	viewContext.fillStyle = "rgba(255,255,255,255)";
 
-	let topLeftView = invtransfo.transformPoint(new DOMPoint(0, 0));
-	let bottomRightView = invtransfo.transformPoint(new DOMPoint(destW-1, destH-1));
-	let topLeftWork = {x:topLeftView.x/destW*workCanvas.width, y:topLeftView.y/destH*workCanvas.height};
-	let bottomRightWork = {x:bottomRightView.x/destW*workCanvas.width, y:bottomRightView.y/destH*workCanvas.height};
+	let ofs = v(curSprtFrame1 * 2 * prtcle_count);
+	drawSprites(ofs);
+	curSprtFrame1 = v((curSprtFrame1+1)%prtcle_frames_count);
 
-	let zoomSourceCoord = destToSource(zoomDestCoord);
+	ofs = v(curSprtFrame2 * 2 * prtcle_count);
+	drawSprites(ofs);
+	curSprtFrame2 = v((curSprtFrame2+1)%prtcle_frames_count);
 
-	let topleft = destToSource({x:Math.max(0,-0.5 + zoomDestCoord.x), y:Math.max(0,-0.5 +  zoomDestCoord.y)});
-	let bottomright = destToSource({x:Math.min(1,0.5 + zoomDestCoord.x), y:Math.min(1,0.5 + zoomDestCoord.y)});
+	ofs = v(curSprtFrame3 * 2 * prtcle_count);
+	drawSprites(ofs);
+	curSprtFrame3 = v((curSprtFrame3+1)%prtcle_frames_count);
 
-	imagezone.x = topleft.x;
-	imagezone.y = topleft.y;
-	imagezone.w = bottomright.x-topleft.x;
-	imagezone.h = bottomright.y-topleft.y;
+	ofs = v(curSprtFrame4 * 2 * prtcle_count);
+	drawSprites(ofs);
+	curSprtFrame4 = v((curSprtFrame4+1)%prtcle_frames_count);
+	return;
 
-
-	// show mouse cursor
-	var cx = grab_curx;
-	var cy = grab_cury;
-	var r = getElemInt10('bobsize');
-	viewContext.beginPath();
-	viewContext.arc(cx, cy, r, 0, 2 * Math.PI);
-	viewContext.fill();
-
-	for (var i = 0; i < PATH_PTS.length; i++) {
-		let coord = sourceToDest({x:PATH_PTS[i].x,y:PATH_PTS[i].y});
-		var r = PATH_PTS[i].r * cameraZoom;
-		viewContext.beginPath();
-		viewContext.arc(coord.x + cameraOffset.x, coord.y + cameraOffset.y, r, 0, 2 * Math.PI);
-		viewContext.fill();
-	}
-
-//	showGrab(_time, cameraZoom);
 }
 
-
+function drawSprites(ofs) {
+	for (var i = 0; i < prtcle_count; i++) {
+		let x = sprtCoord[ofs + i*2];
+		let y = sprtCoord[ofs + i*2+1];
+		viewContext.beginPath();
+		viewContext.arc(twirl_centerx + x, twirl_centery + y, prtcle_rad, 0, 2 * Math.PI);
+		viewContext.fill();
+	}	
+}
 
 // Gets the relevant location from a mouse or single touch event
 function getEventLocation(e)

@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE html>
 <html><head>
-    <title>Bitmap Exporter</title>
+    <title>PathTool</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
@@ -46,6 +46,10 @@
               <div class="col_9" style='background-color:rgba(0,0,0,0);'>
                 BobSize&nbsp;<input type="range" min="1" max="32" value="2" class="slider" id="bobsize">
                 Interp&nbsp;<input type="range" min="0" max="32" value="0" class="slider" id="interp">
+                <input id="file-input2" type="file" name="name" style="display: none;" />
+                <button type="button" onclick="if (!workCanvas) alert('load an image first!'); else document.getElementById('file-input2').click();">Load</button>
+                <button type="button" onclick="downloadJSON(MYDATA, 'PathTool.txt', 'text/plain');">Save</button>
+                <button type="button" onclick="play();">Play</button>
                 <br><canvas id='viewCanvas' type="overflow:scroll;"></canvas>
               </div>
               <div id="frames" class="col_9" style='background-color:rgba(200,200,200,0.5);'>
@@ -160,7 +164,6 @@
             <button type="button" onclick="grabToSprites()">Export Sprites</button><br>
             <button type="button" onclick="grabToBobs()">Export Bobs</button><br>
             <button type="button" onclick="addFrame()">Grab Frame</button><br>
-            <!-- <button type="button" onclick="grabToView()">Zoom</button><br> -->
             <button type="button" onclick="onGrabCancelButton()"> Cancel</button><br>
             </center>
          </div>
