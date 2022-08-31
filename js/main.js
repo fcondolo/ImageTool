@@ -11,6 +11,8 @@ var MYDATA = {
 };
 
 var chosenFileName = null;
+var PLAY = false;
+var PLAYFRAME = false;
 
 // All variables for the source image (original image given by the user)
 var sourceImage;
@@ -1148,7 +1150,16 @@ function editorOnEsc() {
 	inGrabContext = false;
 }
 
-
+function play() {
+	if (PLAY) {
+		PLAYFRAME = 0;
+		PLAY = false;
+	}
+	else {
+		PLAYFRAME = 0;
+		PLAY = true;
+	}
+}
 
 
 
