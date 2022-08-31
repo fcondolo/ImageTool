@@ -35,8 +35,8 @@ function keyUp(event) {
 
         // Numbers
 	    case 48: break; // 0
-	    case 49: break; // 1
-	    case 50: break; // 2
+	    case 49: setElemValue('bobsize', v(Math.max(1,getElemInt10('bobsize') / 2))); break; // 1
+	    case 50: setElemValue('bobsize', v(Math.min(16,getElemInt10('bobsize') * 2))); break; // 2
 	    case 51: break; // 4
 	    case 52: break; // 8
 	    case 53: break; // 16
@@ -70,8 +70,8 @@ function keyUp(event) {
         case 86: break; // v
         case 87: break; // w
         case 88: break; // x
-        case 89: break; // y
-        case 90: break; // z
+        case 89: if (CTRL) redo(); break; // y
+        case 90: if (CTRL) undo(); break; // z
 
         case 107:
         case 171: 	{

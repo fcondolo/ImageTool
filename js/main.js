@@ -10,9 +10,12 @@ var MYDATA = {
 	lists : []
 };
 
+var UNDOREDO = [];
+var UNDOREDO_INDEX = 0;
+
 var chosenFileName = null;
-var PLAY = false;
-var PLAYFRAME = false;
+var PLAY = 0;
+var PLAYFRAME = 0;
 
 // All variables for the source image (original image given by the user)
 var sourceImage;
@@ -1131,7 +1134,7 @@ function onMouseClick(e) {
 			y : (coord.y) / viewCanvas.height,
 			r: getElemInt10('bobsize')
 		});
-
+		pushundoredo();
 		refreshPointsList();
 	}
 }
@@ -1150,14 +1153,14 @@ function editorOnEsc() {
 	inGrabContext = false;
 }
 
-function play() {
-	if (PLAY) {
+function play(_mode) {
+	if (PLAY !== 0) {
 		PLAYFRAME = 0;
-		PLAY = false;
+		PLAY = 0;
 	}
 	else {
 		PLAYFRAME = 0;
-		PLAY = true;
+		PLAY = _mode;
 	}
 }
 
@@ -1781,4 +1784,33 @@ function addNewList(_name) {
 		_name = "default";
 	MYDATA.lists.push({name: _name, points:[]});
 	refreshLists();
+}
+
+
+function pushundoredo() {
+	if (UNDOREDO_INDEX >= UNDOREDO.length-1) {
+		UNDOREDO.push(JSON.parse(JSON.stringify(MYDATA)));
+		UNDOREDO_INDEX = UNDOREDO.length-1;
+		console.log("push new undoredo. index = " + UNDOREDO_INDEX);
+		return
+	}
+	UNDOREDO[UNDOREDO_INDEX] = JSON.parse(JSON.stringify(MYDATA));
+	UNDOREDO_INDEX++;
+	console.log("undoredo index = " + UNDOREDO_INDEX);
+}
+
+function undo() {
+	if (UNDOREDO_INDEX > 0) {
+		UNDOREDO_INDEX--;
+		MYDATA = JSON.parse(JSON.stringify(UNDOREDO[UNDOREDO_INDEX]));
+		console.log("undoredo index = " + UNDOREDO_INDEX);
+	}
+}
+
+function redo() {
+	if (UNDOREDO_INDEX < UNDOREDO.length-1) {
+		UNDOREDO_INDEX++;
+		MYDATA = JSON.parse(JSON.stringify(UNDOREDO[UNDOREDO_INDEX]));
+		console.log("undoredo index = " + UNDOREDO_INDEX);
+	}
 }
