@@ -1705,54 +1705,35 @@ function remapPaletteFromBin(_bin) {
 }
 
 
-function postPaletteUpdate() {
-	pixelsPaletteIndex = new Uint8Array(cropW * cropH);
-	var write = 0;
-	var read = 0;
-	for (var y = 0; y < cropH; y++) {
-		for (var x = 0; x < cropW; x++) {
-			var ir = workImagePixels[read];
-			var ig = workImagePixels[read+1];
-			var ib = workImagePixels[read+2];
-			read += 4;
-			pixelsPaletteIndex[write++] = findNearesIndexInPalette(ir, ig, ib);
-		}
-	}
-	
-	var read = 0;
-	var write = 0;
-	for (var y = 0; y < cropH; y++) {
-		for (var x = 0; x < cropW; x++) {
-			var index = pixelsPaletteIndex[read++];
-			var col = global_palette[index];
-			workImagePixels[write] = col.r;
-			workImagePixels[write+1] = col.g;
-			workImagePixels[write+2] = col.b;
-			write += 4;
-		}
-	}	
-	workImageData.data = workImagePixels;
-	workContext.putImageData(workImageData, 0, 0);
-	refreshPaletteInfo();	
-}
-
-
-function refreshLists() {
+function refreshLists(_index) {
 	let elm = getElem("alllists");
+	if (MYDATA.lists.length === 0) {
+		elm.innerHTML = "";
+		const elm2 = getElem("ptslist");
+		elm2.innerHTML = "";
+		return;
+	}
 	let val = "";
 	for (var i = 0; i < MYDATA.lists.length; i++) {
 		const lst = MYDATA.lists[i];
 		val += '<option value="' + lst.name +'">' + lst.name + '</option>';
 	}
 	elm.innerHTML = val;
-	elm.selectedIndex = MYDATA.lists.length-1;
+	if (!_index)
+		elm.selectedIndex = MYDATA.lists.length-1;
+	else
+		elm.selectedIndex = _index;
 	refreshPointsList();
 }
 
 
 function refreshPointsList() {
 	const elm = getElem("ptslist");
-	const index = getElem("alllists").selectedIndex;
+	if (MYDATA.lists.length === 0) {
+		elm.innerHTML = "";
+		return;
+	}
+	let index = getElem("alllists").selectedIndex;
 	if (index < 0) {
 		index = 0;
 		getElem("alllists").selectedIndex = index;
@@ -1776,8 +1757,28 @@ function addNewList(_name) {
 		_name = getElemValue("listname");
 	if (_name.length < 1)
 		_name = "default";
-	MYDATA.lists.push({name: _name, points:[]});
-	refreshLists();
+
+	let index = getElem("alllists").selectedIndex;
+	if (index < 0) {
+		MYDATA.lists.push({name: _name, points:[]});
+		index = -1;
+	}
+	else
+		MYDATA.lists.splice(index+1, 0, {name: _name, points:[]});
+
+	refreshLists(index+1);
+	pushundoredo();
+}
+
+function deleteList() {
+	let index = getElem("alllists").selectedIndex;
+	if (index < 0) {alert("please select the list to be deleted"); return;}
+	MYDATA.lists.splice(index, 1);
+	if (index >= MYDATA.lists.length)
+		index = MYDATA.lists.length-1;
+	if (index < 0)
+		index = 0;
+	refreshLists(index);
 	pushundoredo();
 }
 
