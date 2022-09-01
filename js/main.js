@@ -1107,6 +1107,8 @@ function onMouseClick(e) {
 		}
 
 		let elm = getElem("alllists");
+		if (elm.selectedIndex < 0) { alert("Sorry, there' a bug, please re-select the list you want to edit"); return; }
+		if (elm.selectedIndex >= MYDATA.lists.length) { alert("Sorry, there' a bug, please re-select the list you want to edit"); return; }
 		MYDATA.lists[elm.selectedIndex].points.push({
 			x : (coord.x) / viewCanvas.width,
 			y : (coord.y) / viewCanvas.height,
@@ -1750,7 +1752,16 @@ function refreshLists() {
 
 function refreshPointsList() {
 	const elm = getElem("ptslist");
-	const lst = MYDATA.lists[getElem("alllists").selectedIndex].points;
+	const index = getElem("alllists").selectedIndex;
+	if (index < 0) {
+		index = 0;
+		getElem("alllists").selectedIndex = index;
+	}
+	if (index >= MYDATA.lists.length) {
+		index = MYDATA.lists.length-1;
+		getElem("alllists").selectedIndex = index;
+	}
+	const lst = MYDATA.lists[index].points;
 	elm.size = Math.min(20,lst.length);
 	let content = "";
 	for (let i = 0; i < lst.length; i++) {
@@ -1767,6 +1778,7 @@ function addNewList(_name) {
 		_name = "default";
 	MYDATA.lists.push({name: _name, points:[]});
 	refreshLists();
+	pushundoredo();
 }
 
 
@@ -1774,19 +1786,17 @@ function pushundoredo() {
 	if (UNDOREDO_INDEX >= UNDOREDO.length-1) {
 		UNDOREDO.push(JSON.parse(JSON.stringify(MYDATA)));
 		UNDOREDO_INDEX = UNDOREDO.length-1;
-		console.log("push new undoredo. index = " + UNDOREDO_INDEX);
 		return
 	}
 	UNDOREDO[UNDOREDO_INDEX] = JSON.parse(JSON.stringify(MYDATA));
 	UNDOREDO_INDEX++;
-	console.log("undoredo index = " + UNDOREDO_INDEX);
 }
 
 function undo() {
 	if (UNDOREDO_INDEX > 0) {
 		UNDOREDO_INDEX--;
 		MYDATA = JSON.parse(JSON.stringify(UNDOREDO[UNDOREDO_INDEX]));
-		console.log("undoredo index = " + UNDOREDO_INDEX);
+		refreshLists();
 	}
 }
 
@@ -1794,6 +1804,6 @@ function redo() {
 	if (UNDOREDO_INDEX < UNDOREDO.length-1) {
 		UNDOREDO_INDEX++;
 		MYDATA = JSON.parse(JSON.stringify(UNDOREDO[UNDOREDO_INDEX]));
-		console.log("undoredo index = " + UNDOREDO_INDEX);
+		refreshLists();
 	}
 }
