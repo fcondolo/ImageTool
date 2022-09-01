@@ -7,7 +7,8 @@ pixelsPaletteIndex : index in palette of each pixel in the work image
 */
 
 var MYDATA = {
-	lists : []
+	lists : [],
+	interp : 0
 };
 
 var UNDOREDO = [];
@@ -1154,7 +1155,7 @@ function editorOnEsc() {
 }
 
 function play(_mode) {
-	if (PLAY !== 0) {
+	if (PLAY === _mode) {
 		PLAYFRAME = 0;
 		PLAY = 0;
 	}
@@ -1336,6 +1337,7 @@ function readJSONFile(e) {
 	var reader = new FileReader();
 	reader.onload = function(e) {
 		MYDATA = JSON.parse(e.target.result);
+		setElemValue('interp', MYDATA.interp);
 		setTimeout(function() { refreshLists(); }, 500);
 	};
 	reader.readAsText(file);

@@ -113,142 +113,11 @@ function buildViewImage(_time) {
 	invtransfo.invertSelf();
 
 
-	if (PLAY === 0) {
-		const index = getElem("alllists").selectedIndex;
-		if (index >= 0 && index < MYDATA.lists.length) {
-			const PATH_PTS = MYDATA.lists[index].points;
-	
-			let interpCount = getElemInt10('interp');
-			let prevx, prevy, prevr;
-			for (var i = 0; i < PATH_PTS.length; i++) {
-				let coord = {x:PATH_PTS[i].x * destW,y:PATH_PTS[i].y * destH};
-				var r = PATH_PTS[i].r;
-				viewContext.beginPath();
-				viewContext.arc(coord.x, coord.y, r, 0, 2 * Math.PI);
-				viewContext.fill();
-				if (i > 0) {
-					if (interpCount > 0) {
-						let slopex = (coord.x - prevx) / interpCount;
-						let slopey = (coord.y - prevy) / interpCount;
-						let sloper = (r - prevr) / interpCount;
-						for (var j = 0; j < interpCount; j++) {
-							prevx += slopex;
-							prevy += slopey;
-							prevr += sloper;
-							viewContext.beginPath();
-							viewContext.arc(prevx, prevy, prevr, 0, 2 * Math.PI);
-							viewContext.fill();
-						}
-					}
-				}
-				prevx = coord.x;
-				prevy = coord.y;
-				prevr = r;
-			}	
-		}	
-	} else if (PLAY === 1) {
-		let keyIndex = 0;
-		let interpCount = getElemInt10('interp');
-		let prevx, prevy, prevr;
-		let canInterp = false;
-
-		let maxKeyIndex = 0;
-		for (var listIt = 0; listIt < MYDATA.lists.length; listIt++) {
-			const curList = MYDATA.lists[listIt];
-			maxKeyIndex += curList.points.length;
-		}
-		maxKeyIndex *= interpCount;
-
-		for (var listIt = 0; listIt < MYDATA.lists.length; listIt++) {
-			const curList = MYDATA.lists[listIt];
-			canInterp = false; // don't interpolate with previous list
-			for (var keyIt = 0; keyIt < curList.points.length; keyIt++) {
-				if (keyIndex <= PLAYFRAME) {
-					const pathPt = curList.points[keyIt];
-					let coord = {x:pathPt.x * destW, y:pathPt.y * destH};
-					var r = pathPt.r;
-					viewContext.beginPath();
-					viewContext.arc(coord.x, coord.y, r, 0, 2 * Math.PI);
-					viewContext.fill();
-					if (canInterp) {
-						let slopex = (coord.x - prevx) / interpCount;
-						let slopey = (coord.y - prevy) / interpCount;
-						let sloper = (r - prevr) / interpCount;
-						for (var j = 0; j < interpCount; j++) {
-							prevx += slopex;
-							prevy += slopey;
-							prevr += sloper;
-							viewContext.beginPath();
-							viewContext.arc(prevx, prevy, prevr, 0, 2 * Math.PI);
-							viewContext.fill();
-							keyIndex++;
-							if (keyIndex >= PLAYFRAME)
-								break;
-						}
-					}
-					prevx = coord.x;
-					prevy = coord.y;
-					prevr = r;
-					canInterp = true;
-				}
-				if (keyIndex === 0) keyIndex++;
-			}				
-		}
-		PLAYFRAME++;
-		if (PLAYFRAME >= maxKeyIndex)
-			PLAYFRAME = 0;
-	}  else if (PLAY === 2) {
-		let interpCount = getElemInt10('interp');
-		let prevx, prevy, prevr;
-		let canInterp = false;
-
-		let maxKeyIndex = 0;
-		for (var listIt = 0; listIt < MYDATA.lists.length; listIt++) {
-			const curList = MYDATA.lists[listIt];
-			if (curList.points.length > maxKeyIndex)
-				maxKeyIndex = curList.points.length;
-		}
-		maxKeyIndex *= interpCount;
-
-		for (var listIt = 0; listIt < MYDATA.lists.length; listIt++) {
-			const curList = MYDATA.lists[listIt];
-			canInterp = false; // don't interpolate with previous list
-			let keyIndex = 0;
-			for (var keyIt = 0; keyIt < curList.points.length; keyIt++) {
-				if (keyIndex <= PLAYFRAME) {
-					const pathPt = curList.points[keyIt];
-					let coord = {x:pathPt.x * destW, y:pathPt.y * destH};
-					var r = pathPt.r;
-					viewContext.beginPath();
-					viewContext.arc(coord.x, coord.y, r, 0, 2 * Math.PI);
-					viewContext.fill();
-					if (canInterp) {
-						let slopex = (coord.x - prevx) / interpCount;
-						let slopey = (coord.y - prevy) / interpCount;
-						let sloper = (r - prevr) / interpCount;
-						for (var j = 0; j < interpCount; j++) {
-							prevx += slopex;
-							prevy += slopey;
-							prevr += sloper;
-							viewContext.beginPath();
-							viewContext.arc(prevx, prevy, prevr, 0, 2 * Math.PI);
-							viewContext.fill();
-							keyIndex++;
-							if (keyIndex >= PLAYFRAME)
-								break;
-						}
-					}
-					prevx = coord.x;
-					prevy = coord.y;
-					prevr = r;
-					canInterp = true;
-				}
-				if (keyIndex === 0) keyIndex++;
-			}				
-		}
-		PLAYFRAME++;
-		if (PLAYFRAME >= maxKeyIndex)
-			PLAYFRAME = 0;
+	switch (PLAY) {
+		case 0 : drawCurrentListPoints(); break;
+		case 1 : drawAnimPointsSingle(); break;
+		case 2 : drawAnimPointsParallel(); break;
+		default : break;
 	}
 
 
@@ -289,6 +158,154 @@ function drawSprites(ofs) {
 		viewContext.arc(twirl_centerx + x, twirl_centery + y, prtcle_rad, 0, 2 * Math.PI);
 		viewContext.fill();
 	}	
+}
+
+
+function drawCurrentListPoints() {
+	const index = getElem("alllists").selectedIndex;
+	if (index >= 0 && index < MYDATA.lists.length) {
+		const PATH_PTS = MYDATA.lists[index].points;
+
+		let interpCount = getElemInt10('interp');
+		MYDATA.interp = interpCount;
+		let prevx, prevy, prevr;
+		for (var i = 0; i < PATH_PTS.length; i++) {
+			let coord = {x:PATH_PTS[i].x * destW,y:PATH_PTS[i].y * destH};
+			var r = PATH_PTS[i].r;
+			viewContext.beginPath();
+			viewContext.arc(coord.x, coord.y, r, 0, 2 * Math.PI);
+			viewContext.fill();
+			if (i > 0) {
+				if (interpCount > 0) {
+					let slopex = (coord.x - prevx) / interpCount;
+					let slopey = (coord.y - prevy) / interpCount;
+					let sloper = (r - prevr) / interpCount;
+					for (var j = 0; j < interpCount; j++) {
+						prevx += slopex;
+						prevy += slopey;
+						prevr += sloper;
+						viewContext.beginPath();
+						viewContext.arc(prevx, prevy, prevr, 0, 2 * Math.PI);
+						viewContext.fill();
+					}
+				}
+			}
+			prevx = coord.x;
+			prevy = coord.y;
+			prevr = r;
+		}
+	}
+}
+
+
+function drawAnimPointsSingle() {
+	let keyIndex = 0;
+	let interpCount = getElemInt10('interp');
+	MYDATA.interp = interpCount;
+	let prevx, prevy, prevr;
+	let canInterp = false;
+
+	let maxKeyIndex = 0;
+	for (var listIt = 0; listIt < MYDATA.lists.length; listIt++) {
+		const curList = MYDATA.lists[listIt];
+		maxKeyIndex += curList.points.length;
+	}
+	maxKeyIndex *= interpCount;
+
+	for (var listIt = 0; listIt < MYDATA.lists.length; listIt++) {
+		const curList = MYDATA.lists[listIt];
+		canInterp = false; // don't interpolate with previous list
+		for (var keyIt = 0; keyIt < curList.points.length; keyIt++) {
+			if (keyIndex <= PLAYFRAME) {
+				const pathPt = curList.points[keyIt];
+				let coord = {x:pathPt.x * destW, y:pathPt.y * destH};
+				var r = pathPt.r;
+				viewContext.beginPath();
+				viewContext.arc(coord.x, coord.y, r, 0, 2 * Math.PI);
+				viewContext.fill();
+				if (canInterp) {
+					let slopex = (coord.x - prevx) / interpCount;
+					let slopey = (coord.y - prevy) / interpCount;
+					let sloper = (r - prevr) / interpCount;
+					for (var j = 0; j < interpCount; j++) {
+						prevx += slopex;
+						prevy += slopey;
+						prevr += sloper;
+						viewContext.beginPath();
+						viewContext.arc(prevx, prevy, prevr, 0, 2 * Math.PI);
+						viewContext.fill();
+						keyIndex++;
+						if (keyIndex >= PLAYFRAME)
+							break;
+					}
+				}
+				prevx = coord.x;
+				prevy = coord.y;
+				prevr = r;
+				canInterp = true;
+			}
+			if (keyIndex === 0) keyIndex++;
+		}				
+	}
+	PLAYFRAME++;
+	if (PLAYFRAME >= maxKeyIndex)
+		PLAYFRAME = 0;
+}
+
+
+function drawAnimPointsParallel() {
+	let interpCount = getElemInt10('interp');
+	MYDATA.interp = interpCount;
+	let prevx, prevy, prevr;
+	let canInterp = false;
+
+	let maxKeyIndex = 0;
+	for (var listIt = 0; listIt < MYDATA.lists.length; listIt++) {
+		const curList = MYDATA.lists[listIt];
+		if (curList.points.length > maxKeyIndex)
+			maxKeyIndex = curList.points.length;
+	}
+	maxKeyIndex *= interpCount;
+
+	for (var listIt = 0; listIt < MYDATA.lists.length; listIt++) {
+		const curList = MYDATA.lists[listIt];
+		canInterp = false; // don't interpolate with previous list
+		let keyIndex = 0;
+		for (var keyIt = 0; keyIt < curList.points.length; keyIt++) {
+			if (keyIndex <= PLAYFRAME) {
+				const pathPt = curList.points[keyIt];
+				let coord = {x:pathPt.x * destW, y:pathPt.y * destH};
+				var r = pathPt.r;
+				viewContext.beginPath();
+				viewContext.arc(coord.x, coord.y, r, 0, 2 * Math.PI);
+				viewContext.fill();
+				if (canInterp) {
+					let slopex = (coord.x - prevx) / interpCount;
+					let slopey = (coord.y - prevy) / interpCount;
+					let sloper = (r - prevr) / interpCount;
+					for (var j = 0; j < interpCount; j++) {
+						prevx += slopex;
+						prevy += slopey;
+						prevr += sloper;
+						viewContext.beginPath();
+						viewContext.arc(prevx, prevy, prevr, 0, 2 * Math.PI);
+						viewContext.fill();
+						keyIndex++;
+						if (keyIndex >= PLAYFRAME)
+							break;
+					}
+				}
+				prevx = coord.x;
+				prevy = coord.y;
+				prevr = r;
+				canInterp = true;
+			}
+			if (keyIndex === 0) keyIndex++;
+		}				
+	}
+	PLAYFRAME++;
+	if (PLAYFRAME >= maxKeyIndex)
+		PLAYFRAME = 0;
 }
 
 // Gets the relevant location from a mouse or single touch event

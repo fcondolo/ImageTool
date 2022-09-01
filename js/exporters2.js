@@ -31,6 +31,8 @@ function genSpriteCtrlWords(x,y,h, attached) {
 
 
 function downloadJSON(content, fileName, contentType) {
+	let interpCount = getElemInt10('interp');
+	content.interp = interpCount;
 	var jsonData = JSON.stringify(content);
     var a = document.createElement("a");
     var file = new Blob([jsonData], {type: contentType});
