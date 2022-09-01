@@ -74,6 +74,13 @@ function precalcSprites() {
 	}
 }
 
+
+function drawPoint(_x, _y, _r) {
+	viewContext.beginPath();
+	viewContext.arc(_x, _y, _r, 0, 2 * Math.PI);
+	viewContext.fill();
+}
+
 var curSprtFrame1 = 0
 var curSprtFrame2 = prtcle_frames_count/4;
 var curSprtFrame3 = prtcle_frames_count/4*2;
@@ -115,17 +122,15 @@ function buildViewImage(_time) {
 
 	switch (PLAY) {
 		case 0 : drawCurrentListPoints(); break;
-		case 1 : drawAnimPointsSingle(); break;
-		case 2 : drawAnimPointsParallel(); break;
+		case 1 : drawAnimPoints(false); break;
+		case 2 : drawAnimPoints(true); break;
 		default : break;
 	}
 
 
 	// MOUSE
 	viewContext.resetTransform();
-	viewContext.beginPath();
-	viewContext.arc(grab_curx, grab_cury, getElemInt10('bobsize') * cameraZoom, 0, 2 * Math.PI);
-	viewContext.fill();
+	drawPoint(grab_curx, grab_cury, getElemInt10('bobsize') * cameraZoom);
 
 	return;
 	//DRAW SPRITES
@@ -154,9 +159,7 @@ function drawSprites(ofs) {
 	for (var i = 0; i < prtcle_count; i++) {
 		let x = sprtCoord[ofs + i*2];
 		let y = sprtCoord[ofs + i*2+1];
-		viewContext.beginPath();
-		viewContext.arc(twirl_centerx + x, twirl_centery + y, prtcle_rad, 0, 2 * Math.PI);
-		viewContext.fill();
+		drawPoint(twirl_centerx + x, twirl_centery + y, prtcle_rad);
 	}	
 }
 
@@ -172,9 +175,7 @@ function drawCurrentListPoints() {
 		for (var i = 0; i < PATH_PTS.length; i++) {
 			let coord = {x:PATH_PTS[i].x * destW,y:PATH_PTS[i].y * destH};
 			var r = PATH_PTS[i].r;
-			viewContext.beginPath();
-			viewContext.arc(coord.x, coord.y, r, 0, 2 * Math.PI);
-			viewContext.fill();
+			drawPoint(coord.x, coord.y, r);
 			if (i > 0) {
 				if (interpCount > 0) {
 					let slopex = (coord.x - prevx) / interpCount;
@@ -184,9 +185,7 @@ function drawCurrentListPoints() {
 						prevx += slopex;
 						prevy += slopey;
 						prevr += sloper;
-						viewContext.beginPath();
-						viewContext.arc(prevx, prevy, prevr, 0, 2 * Math.PI);
-						viewContext.fill();
+						drawPoint(prevx, prevy, prevr);
 					}
 				}
 			}
@@ -198,53 +197,48 @@ function drawCurrentListPoints() {
 }
 
 
-function drawAnimPointsSingle() {
+function drawAnimPoints(_parallel) {
 	let keyIndex = 0;
 	let interpCount = getElemInt10('interp');
 	MYDATA.interp = interpCount;
 	let prevx, prevy, prevr;
 	let canInterp = false;
 
-	let maxKeyIndex = 0;
+	let totalPointsCount = 0;
 	for (var listIt = 0; listIt < MYDATA.lists.length; listIt++) {
 		const curList = MYDATA.lists[listIt];
-		maxKeyIndex += curList.points.length;
+		totalPointsCount += curList.points.length;
 	}
-	maxKeyIndex *= interpCount;
-
+	const maxKeyIndex = totalPointsCount * interpCount;
 	for (var listIt = 0; listIt < MYDATA.lists.length; listIt++) {
 		const curList = MYDATA.lists[listIt];
-		canInterp = false; // don't interpolate with previous list
+		if (_parallel)
+			keyIndex = 0;
 		for (var keyIt = 0; keyIt < curList.points.length; keyIt++) {
-			if (keyIndex <= PLAYFRAME) {
-				const pathPt = curList.points[keyIt];
-				let coord = {x:pathPt.x * destW, y:pathPt.y * destH};
-				var r = pathPt.r;
-				viewContext.beginPath();
-				viewContext.arc(coord.x, coord.y, r, 0, 2 * Math.PI);
-				viewContext.fill();
-				if (canInterp) {
-					let slopex = (coord.x - prevx) / interpCount;
-					let slopey = (coord.y - prevy) / interpCount;
-					let sloper = (r - prevr) / interpCount;
-					for (var j = 0; j < interpCount; j++) {
-						prevx += slopex;
-						prevy += slopey;
-						prevr += sloper;
-						viewContext.beginPath();
-						viewContext.arc(prevx, prevy, prevr, 0, 2 * Math.PI);
-						viewContext.fill();
-						keyIndex++;
-						if (keyIndex >= PLAYFRAME)
-							break;
-					}
-				}
-				prevx = coord.x;
-				prevy = coord.y;
-				prevr = r;
-				canInterp = true;
+			const thisPt = curList.points[keyIt];
+			let nextPt = thisPt;
+			if (keyIt < curList.points.length - 1)
+				nextPt = curList.points[keyIt + 1];
+			let slopex = 0;
+			let slopey = 0;
+			let sloper = 0;
+			if (interpCount > 0) {
+				slopex = (nextPt.x - thisPt.x) / interpCount;
+				slopey = (nextPt.y - thisPt.y) / interpCount;
+				sloper = (nextPt.r - thisPt.r) / interpCount;	
 			}
-			if (keyIndex === 0) keyIndex++;
+			let cx = thisPt.x;
+			let cy = thisPt.y;
+			let cr = thisPt.r;
+			for (var j = 0; j < interpCount; j++) {
+				if (keyIndex > PLAYFRAME)
+					break;
+				drawPoint(cx * destW, cy* destH, cr);
+				keyIndex++;
+				cx += slopex;
+				cy += slopey;
+				cr += sloper;
+			}
 		}				
 	}
 	PLAYFRAME++;
@@ -253,60 +247,6 @@ function drawAnimPointsSingle() {
 }
 
 
-function drawAnimPointsParallel() {
-	let interpCount = getElemInt10('interp');
-	MYDATA.interp = interpCount;
-	let prevx, prevy, prevr;
-	let canInterp = false;
-
-	let maxKeyIndex = 0;
-	for (var listIt = 0; listIt < MYDATA.lists.length; listIt++) {
-		const curList = MYDATA.lists[listIt];
-		if (curList.points.length > maxKeyIndex)
-			maxKeyIndex = curList.points.length;
-	}
-	maxKeyIndex *= interpCount;
-
-	for (var listIt = 0; listIt < MYDATA.lists.length; listIt++) {
-		const curList = MYDATA.lists[listIt];
-		canInterp = false; // don't interpolate with previous list
-		let keyIndex = 0;
-		for (var keyIt = 0; keyIt < curList.points.length; keyIt++) {
-			if (keyIndex <= PLAYFRAME) {
-				const pathPt = curList.points[keyIt];
-				let coord = {x:pathPt.x * destW, y:pathPt.y * destH};
-				var r = pathPt.r;
-				viewContext.beginPath();
-				viewContext.arc(coord.x, coord.y, r, 0, 2 * Math.PI);
-				viewContext.fill();
-				if (canInterp) {
-					let slopex = (coord.x - prevx) / interpCount;
-					let slopey = (coord.y - prevy) / interpCount;
-					let sloper = (r - prevr) / interpCount;
-					for (var j = 0; j < interpCount; j++) {
-						prevx += slopex;
-						prevy += slopey;
-						prevr += sloper;
-						viewContext.beginPath();
-						viewContext.arc(prevx, prevy, prevr, 0, 2 * Math.PI);
-						viewContext.fill();
-						keyIndex++;
-						if (keyIndex >= PLAYFRAME)
-							break;
-					}
-				}
-				prevx = coord.x;
-				prevy = coord.y;
-				prevr = r;
-				canInterp = true;
-			}
-			if (keyIndex === 0) keyIndex++;
-		}				
-	}
-	PLAYFRAME++;
-	if (PLAYFRAME >= maxKeyIndex)
-		PLAYFRAME = 0;
-}
 
 // Gets the relevant location from a mouse or single touch event
 function getEventLocation(e)
@@ -411,68 +351,4 @@ function adjustZoom(zoomAmount, zoomFactor)
     }
 }
 
-
-function showGrab(_time, zoom)  {
-	var zoom = cameraZoom;
-	var ctx = viewContext;
-
-	if (grab_startx < 0) grab_startx = 0;
-	if (grab_starty < 0) grab_starty = 0;
-	if (grab_curx < 0) grab_curx = 0;
-	if (grab_cury < 0) grab_cury = 0;
-	if (grab_startx > cropW) grab_startx = cropW;
-	if (grab_starty > cropH) grab_starty = cropH;
-	if (grab_curx > cropW) grab_curx = cropW;
-	if (grab_cury > cropH) grab_cury = cropH;
-	var r = {x:grab_startx, y:grab_starty, w:grab_curx - grab_startx, h:grab_cury - grab_starty};
-
-
-	var scaled_x = v(r.x*zoom);
-	var scaled_y = v(r.y*zoom);
-	var scaled_w = v(r.w*zoom);
-	var scaled_h = v(r.h*zoom);
-
-	var minx = Math.min(scaled_x, scaled_x + scaled_w);
-	var miny = Math.min(scaled_y, scaled_y + scaled_h);
-	var maxx = Math.max(scaled_x, scaled_x + scaled_w);
-	var maxy = Math.max(scaled_y, scaled_y + scaled_h);
-
-	var alpha = 0.7 + 0.3*Math.abs(Math.sin(_time * 6.2));
-	var rd = 255 * Math.abs(Math.cos(_time * 5));
-	var g = 255 * Math.abs(Math.sin(_time * 5));
-	var b = 255 * Math.abs(Math.sin(_time * 4));
-	var stroke = "rgba("+rd+","+g+","+b+"," + alpha + ")";
-	ctx.strokeStyle = stroke;
-	ctx.fillStyle = stroke;
-	
-
-	for (var i = 0; i < PATH_PTS.length; i++) {
-		var cx = v(PATH_PTS[i].x * zoom) - cameraOffset.x * zoom;
-		var cy = v(PATH_PTS[i].y * zoom) - cameraOffset.y * zoom;
-		var r = PATH_PTS[i].r * zoom;
-		ctx.beginPath();
-		ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-		ctx.fill();
-		if (i > 0) {
-			let count = getElemInt10('interp');
-			if (count > 0) {
-				let prevx = v(PATH_PTS[i-1].x * zoom);
-				let prevy = v(PATH_PTS[i-1].y * zoom);
-				let prevr = PATH_PTS[i-1].r * zoom;
-				let slopex = (cx - v(PATH_PTS[i-1].x * zoom)) / count;
-				let slopey = (cy - v(PATH_PTS[i-1].y * zoom)) / count;
-				let sloper = (r - PATH_PTS[i-1].r * zoom) / count;
-				for (var j = 0; j < count; j++) {
-					prevx += slopex;
-					prevy += slopey;
-					prevr += sloper;
-					ctx.beginPath();
-					ctx.arc(prevx, prevy, prevr, 0, 2 * Math.PI);
-					ctx.fill();
-				}
-			}
-		}
-	}
-
-} 
 

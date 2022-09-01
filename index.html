@@ -30,7 +30,7 @@
               <hr>
 
 
-              <center><h3><i>Work Bench</i></h3></center>
+              <center><h3><i>Path Editor</i></h3></center>
               
               <div id="workBench" class="col_3" style='background-color:rgba(0,0,0,0);'>
                 <input type="text" id="listname" name="listname">
@@ -47,110 +47,15 @@
                 BobSize&nbsp;<input type="range" min="1" max="32" value="2" class="slider" id="bobsize">
                 Interp&nbsp;<input type="range" min="0" max="32" value="0" class="slider" id="interp">
                 <input id="file-input2" type="file" name="name" style="display: none;" />
-                <button type="button" onclick="if (!workCanvas) alert('load an image first!'); else document.getElementById('file-input2').click();">Load</button>
+                <button type="button" onclick="if (!workCanvas) alert('Please load an image before loading a Path!'); else document.getElementById('file-input2').click();">Load</button>
                 <button type="button" onclick="downloadJSON(MYDATA, 'PathTool.txt', 'text/plain');">Save</button>
                 <button type="button" onclick="play(1);">Play1</button>
                 <button type="button" onclick="play(2);">Play2</button>
                 <br><canvas id='viewCanvas' type="overflow:scroll;"></canvas>
               </div>
-              <div id="frames" class="col_9" style='background-color:rgba(200,200,200,0.5);'>
-                <center><h3>Grabbed Frames</h3><br>
-                <canvas id='framesCanvas'></canvas>
-                <br><label id="curFrameLabel"></label>
-                <br><button type="button" class="fa fa-arrow-circle-o-left" onclick="prevFrame();"></button>
-                <button type="button" class="fa fa-arrow-circle-o-right" onclick="nextFrame();"></button>
-                <button type="button" class="fa fa-trash-o fa-lg" onclick="deleteFrame();"></button>
-                <button type="button" class="fa fa-floppy-o" onclick="framesToSprites();"> To Sprites</button>
-                <button type="button" class="fa fa-floppy-o" onclick="framesToBobs();"> To Bobs</button>
-              </center>
-              </div>    
               <hr>
             <div id="saveBpl" style='background-color:rgba(200,200,200,0.5);'>
-                <center><h3><i>Bitplane Export</i></h3></center>
-                <button type="button" class="fa fa-files-o" onclick="saveBpl();"> Save Bitplanes</button>
-                &nbsp;(classic raw bitplane data)
-                &nbsp;&nbsp;&nbsp;bpl 1&nbsp;<input type="checkbox" id="xport1" name="xport1">
-                &nbsp;&nbsp;&nbsp;bpl 2&nbsp;<input type="checkbox" id="xport2" name="xport2">
-                &nbsp;&nbsp;&nbsp;bpl 3&nbsp;<input type="checkbox" id="xport3" name="xport3">
-                &nbsp;&nbsp;&nbsp;bpl 4&nbsp;<input type="checkbox" id="xport4" name="xport4">
-                &nbsp;&nbsp;&nbsp;bpl 5&nbsp;<input type="checkbox" id="xport5" name="xport5">
-                &nbsp;&nbsp;&nbsp;Interleave&nbsp;<input type="checkbox" id="xportInterleave" name="xportInterleave">
-                <br><br><button type="button" class="fa fa-file-image-o" onclick="saveRaw();"> Save RGB</button>
-                &nbsp;(12 bit RGB stored on 16 bits per pix)
-                <br><br><button type="button" class="fa fa-file-text-o" onclick="save4Bit();"> Save Indexes</button>
-                &nbsp;(4 bits per pix palette index, so 1 byte is 2 pix, 16 colors max)
-            </div>
-            <div id="savePalette" style='background-color:rgba(200,200,200,0.5);'>
-              <center><h3><i>Palette Export</i></h3>
-                <button type="button" class="fa fa-floppy-o" onclick="savePalette('@fromeditor');"> Save</button>
-              </center>
-                  export as: <select id="paletteMode" onchange="onPalExportMode()">
-                    <option value=palASM>.asm</option>
-                    <option value=paltBin>.bin</option>
-                    <option value=palC>.c</option>
-                    <option value=palCper>copperlist $180</option>
-                    <option value=palCper2>copperlist $1a0</option>
-                </select>
-                &nbsp;save to: <select id="paletteSaveTo" onchange="onPalExportMode()">
-                    <option value=pal_clipBoard>clipboard</option>
-                    <option value=pal_file>file</option>
-                </select>
-                <br><br>Include color count&nbsp;<input type="checkbox" id="includeCount" name="includeCount">
-            </div>                    
-            <div id="saveSprite" style='background-color:rgba(200,200,200,0.5);'>
-              <center>
-                <h3><i>Sprite Export</i></h3>
-                <br><button type="button" id="previewSprtBut" class="fa fa-search" onclick="previewSprites(false);"> Preview</button>
-                <button type="button" class="fa fa-floppy-o" onclick="saveSprite(null);"> Save</button>
-              </center>
-                  export as: <select id="sprtMode" onchange="onSprtExportMode()">
-                    <option value=sprtASM>single .asm</option>
-                    <option value=sprt1Bin>single .bin</option>
-                    <option value=sprt1C>single .c</option>
-                    <option value=sprtBin>multiple .bin</option>
-                </select>
-                &nbsp;save to: <select id="sprtSaveTo" onchange="onSprtExportMode()">
-                    <option value=sprt_clipBoard>clipboard</option>
-                    <option value=sprt_file>file</option>
-                </select>
-                <!-- &nbsp;save from: <select id="sprtSaveFrom">
-                    <option value=sprt_fromCur>current</option>
-                    <option value=sprt_fromGrabbed>grabbed</option>
-                </select> -->
-                <br><br>name prefix&nbsp;<input type="text" id="sprtName" name="sprtName" size="20">
-                &nbsp;&nbsp;&nbsp;height&nbsp;<input type="text" id="sprtH" name="sprtH" onchange="onSprtH()" size="8">
-                &nbsp;&nbsp;&nbsp;count&nbsp;<input type="text" id="sprtC" name="sprtC" onchange="onSprtC()" size="8">
-                <!-- &nbsp;&nbsp;&nbsp;<a href="#viewCanvas" onclick="document.getElementById('viewShow').value='viewShow_sprites'";>Preview</a> -->
-                <br>include header words&nbsp;<input type="checkbox" id="includeCtrl" name="includeCtrl">
-                &nbsp;&nbsp;&nbsp;screen X&nbsp;<input type="text" id="sprtScrX" name="sprtScrX" size="8">
-                &nbsp;&nbsp;&nbsp;screen Y&nbsp;<input type="text" id="sprtScrY" name="sprtScrY" size="8">
-                &nbsp;&nbsp;&nbsp;HSTART ofs&nbsp;<input type="text" id="sprtOfsX" name="sprtOfsX" size="8">
-                &nbsp;&nbsp;&nbsp;VSTART ofs&nbsp;<input type="text" id="sprtOfsY" name="sprtOfsY" size="8">
-                <br>include palette&nbsp;<input type="checkbox" id="includePal" name="includePal">
-                skip empty&nbsp;<input type="checkbox" id="skpEmpty" name="skpEmpty">
-            </div>                    
-            <div id="saveBobs" style='background-color:rgba(200,200,200,0.5);'>
-              <center><h3><i>Bob Export</i></h3>
-                <br><button type="button" id="previewBobBut" class="fa fa-search" onclick="previewBobs(false);"> Preview</button>
-                <button type="button" class="fa fa-floppy-o" onclick="saveBobs();"> Save</button>
-              </center>
-                  export as: <select id="bobMode" onchange="onBobExportMode()">
-                    <option value=bobASM>single .asm</option>
-                    <option value=bobSingleBin>single .bin</option>
-                    <option value=bob1C>single .c</option>
-                    <option value=bobBin>multiple .bin</option>
-                </select>
-                &nbsp;save to: <select id="bobSaveTo" onchange="onBobExportMode()">
-                  <option value=bob_clipBoard>clipboard</option>
-                  <option value=bob_file>file</option>
-              </select>
-              <br><br>name prefix&nbsp;<input type="text" id="bobName" name="bobName" size="20">
-                &nbsp;&nbsp;&nbsp;width&nbsp;<input type="text" id="bobW" name="bobW" onchange="onBobW()" size="8">
-                &nbsp;&nbsp;&nbsp;height&nbsp;<input type="text" id="bobH" name="bobH" onchange="onBobH()" size="8">
-                &nbsp;&nbsp;&nbsp;count&nbsp;<input type="text" id="bobC" name="bobC" onchange="onBobC()" size="8">
-                <br><br>include palette&nbsp;<input type="checkbox" id="bobIncludePal" name="bobIncludePal">
-                &nbsp;&nbsp;&nbsp;interlace bitplanes&nbsp;<input type="checkbox" id="bobInterlace" name="bobInterlace">
-                &nbsp;&nbsp;&nbsp;skip empty&nbsp;<input type="checkbox" id="bobSkpEmpty" name="bobSkpEmpty">
+                <center><h3><i>Export</i></h3></center>
             </div>
           <br><br>
           <div id = "mouseFollow" style = "display:none; position:fixed; z-index:10; background-color: #6B6B6B; color: white;">

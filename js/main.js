@@ -199,11 +199,6 @@ function onLoad() {
 	precalcSprites();
 	document.getElementById('file-input').addEventListener('change', readSingleFile, false);
 	document.getElementById('file-input2').addEventListener('change', readJSONFile, false);
-	getElem('frames').style.display = 'none';
-	setElemValue('sprtScrX', 0);
-	setElemValue('sprtScrY', 0);
-	setElemValue('sprtOfsX', 128);
-	setElemValue('sprtOfsY', 44);
 
     document.onmousemove = function(e) {
         onMouseMove(e);
@@ -408,24 +403,6 @@ function onDrop(_fname) {
 	var w = sourceImage.width;
 	var h = sourceImage.height
 	writeCropValues(0,0,w,h);
-
-	//getElem("refImgName").innerHTML = "file: " + sourceImage.file.name + " - size: " + w + "x" + h + " pixels.";
-	getElem('sprtName').value = export_fileName;
-//	getElem('lockclr0').checked = false;
-	getElem('bobC').value = 1;
-	getElem('bobName').value = export_fileName;
-	getElem('bobIncludePal').checked = false;
-	getElem('bobInterlace').checked = false;
-	getElem('bobSkpEmpty').checked = false;
-	getElem('xportInterleave').checked = false;
-	getElem('includeCount').checked = false;
-	getElem('includeCtrl').checked = false;
-	getElem('includePal').checked = false;
-	getElem('skpEmpty').checked = false;
-	
-	getElem('sprtH').value = sourceImage.height;
-	getElem('bobW').value = sourceImage.width;
-	getElem('bobH').value = sourceImage.height;
 
 	sourceCanvas = document.getElementById("sourceCanvas");
 	if (!sourceCanvas) {
@@ -1336,7 +1313,11 @@ function readJSONFile(e) {
 	const fname = e.target.files[0].name;
 	var reader = new FileReader();
 	reader.onload = function(e) {
-		MYDATA = JSON.parse(e.target.result);
+		try {
+			MYDATA = JSON.parse(e.target.result);
+		} catch (error) {
+			alert("Can't load this file, make sure it's a valid Path file.");
+		}		
 		setElemValue('interp', MYDATA.interp);
 		setTimeout(function() { refreshLists(); }, 500);
 	};
