@@ -6,6 +6,8 @@ pixelsPaletteIndex : index in palette of each pixel in the work image
 
 */
 
+
+
 var MYDATA = {
 	lists : [],
 	interp : 0
@@ -199,6 +201,7 @@ function onLoad() {
 	precalcSprites();
 	document.getElementById('file-input').addEventListener('change', readSingleFile, false);
 	document.getElementById('file-input2').addEventListener('change', readJSONFile, false);
+	document.getElementById('file-input3').addEventListener('change', readSVGFile, false);
 
     document.onmousemove = function(e) {
         onMouseMove(e);
@@ -440,6 +443,13 @@ function onDrop(_fname) {
 	buildViewImage(0);
 
 	document.getElementById('workBench').scrollIntoView();
+}
+
+function grid(_x,_y) {
+	const d = workImagePixels[4 * (_x + workContext.width * _y) + 1];
+	if (d > 100)
+		return 0;
+	return 255;
 }
 
 function buildWorkImage() {
@@ -1326,203 +1336,106 @@ function readJSONFile(e) {
 	reader.readAsText(file);
 }
 
-function previewSprites(_updateOnly) {
-	setElemValue('viewShow','viewShow_sprites');
-	
-	var zoom = v(parseInt(document.getElementById("zoom").value, 10));
-	var cvs = getElem('previewCanvas');
-	var ctx = cvs.getContext('2d');
-	cvs.width = zoom * spriteWindow.w;
-	cvs.height = zoom * spriteWindow.h;
-	ctx.width = zoom * spriteWindow.w;
-	ctx.height = zoom * spriteWindow.h;
-	ctx.imageSmoothingEnabled = false;
-	ctx.drawImage(workCanvas, spriteWindow.x, spriteWindow.y, spriteWindow.w, spriteWindow.h, 0, 0, zoom * spriteWindow.w, zoom * spriteWindow.h);
+function getPoints(str)
+{
+    str = str.replace(/[0-9]+-/g, function(v)
+        {
+            return v.slice(0, -1) + " -";
+        })
+        .replace(/\.[0-9]+/g, function(v)
+        {
+            return v.match(/\s/g) ? v : v + " ";
+        });
+    
+    var keys = str.match(/[MmLlHhVv]/g);
+    var paths = str.split(/[MmLlHhVvZz]/g)
+    .filter(function(v){ return v.length > 0})
+    .map(function(v){return v.trim()});
+    
+    var x = 0, y = 0, res = "";
+    for(var i = 0, lenKeys = keys.length ; i < lenKeys ; i++)
+    {
+        switch(keys[i])
+        {
+            case "M": case "L": case "l":
+                var arr = paths[i].split(/\s/g).filter(function(v) { return v.length > 0 });
+                for(var t = 0, lenPaths = arr.length ; t < lenPaths ; t++)
+                {
+                    if(t%2 === 0)
+                    {
+                        x = (keys[i] == "l" ? x : 0) + parseFloat(arr[t]);
+                        res += x;
+                    } else 
+                    {
+                        y = (keys[i] == "l" ? y : 0) + parseFloat(arr[t]);
+                        res += y;
+                    }
+                    if(t < lenPaths - 1) res += " ";
+                }
+                break;
+            case "V":
+                y = parseFloat(paths[i]);
+                res += x + " " + y;
+                break;
+            case "v":
+                y += parseFloat(paths[i]);
+                res += x + " " + y;
+                break;
+            case "H":
+                x = parseFloat(paths[i]);
+                res += x + " " + y;
+                break;
+            case "h":
+                x += parseFloat(paths[i]);
+                res += x + " " + y;
+                break;
+        }
+        if(i < lenKeys - 1) res += " ";
+    }
+    
+    return res;
+}
+
+function Contour() {
+	const out = fincContour();
+	let pts = [];
+	for (var i = 0; i < out.length; i++) {
+		const pt = out[i];
+		pts.push({
+			x : pt[0] / workCanvas.width,
+			y : pt[1] / workCanvas.height,
+			r: 1
+		});
+	}
+	MYDATA.lists.push({name: "generated", points:pts});
+	refreshLists();
+}
 
 
-	var thisView = spriteWindow;
-	var sprtC = getElemInt10('sprtC');
-	var originalsprtC = sprtC;
-	var maxsprtC = 0;
-	var sprtH = zoom * getElemInt10('sprtH');
-	var sprtW = zoom * 16;
-
-	var startX = 0;
-	var endX = startX + thisView.w * zoom;
-	var startY = 0;
-	var endY = startY + thisView.h * zoom;
-	ctx.strokeStyle = "rgba(0,255,0,100)";
-	for (var y = startY; y < endY; y += sprtH) {
-		for (var x = startX; x < endX; x += sprtW) {
-			if (sprtC > 0) {
-				ctx.beginPath();
-				ctx.moveTo(x,y);
-				ctx.lineTo(x+sprtW,y);
-				ctx.lineTo(x+sprtW,y+sprtH);
-				ctx.lineTo(x,y+sprtH);
-				ctx.lineTo(x,y);
-				ctx.stroke();			
-				sprtC--;	
-			} else {
-				ctx.fillRect(x,y,sprtW,sprtH);
+function readSVGFile(e) {
+	var file = e.target.files[0];
+	if (!file) {
+	  return;
+	}
+	const fname = e.target.files[0].name;
+	var reader = new FileReader();
+	reader.onload = function(e) {
+		try {
+			var parser = new DOMParser();
+			//var doc = parser.parseFromString(e.target.result, "image/svg+xml");
+			let out = getPoints(e.target.result);
+			MYDATA.lists.push({name: "loaded SVG", points:[]});
+			for (var i = 0; i < out.length; i++) {
+				const pt = out[i];
 			}
-			maxsprtC++;
-		}	
-	}
-	if (originalsprtC > maxsprtC) {
-		setElemValue('sprtC', maxsprtC);
-	}
-
-	if (!_updateOnly) {
-		var e = {clientX:realMouseCoord.x, clientY:realMouseCoord.y};
-		var elm = getElem('preview').style;
-		elm.display = "block";
-		elm.left = (e.clientX + 10).toString()+"px";
-		elm.top = (e.clientY  - v(ctx.height * 3/4)).toString()+"px";
-	}
-}
-
-function previewBobs(_updateOnly) {
-	setElemValue('viewShow','viewShow_bobs');
-
-	var zoom = v(parseInt(document.getElementById("zoom").value, 10));
-	var cvs = getElem('previewCanvas');
-	var ctx = cvs.getContext('2d');
-	cvs.width = zoom * spriteWindow.w;
-	cvs.height = zoom * spriteWindow.h;
-	ctx.width = zoom * spriteWindow.w;
-	ctx.height = zoom * spriteWindow.h;
-	ctx.imageSmoothingEnabled = false;
-	ctx.drawImage(workCanvas, spriteWindow.x, spriteWindow.y, spriteWindow.w, spriteWindow.h, 0, 0, zoom * spriteWindow.w, zoom * spriteWindow.h);
-
-
-	var thisView = spriteWindow;
-	var sprtC = getElemInt10('bobC');
-	var originalsprtC = sprtC;
-	var maxsprtC = 0;
-	var sprtH = zoom * getElemInt10('bobH');
-	var sprtW = zoom * getElemInt10('bobW');
-
-	var startX = 0;
-	var endX = startX + thisView.w * zoom;
-	var startY = 0;
-	var endY = startY + thisView.h * zoom;
-	ctx.strokeStyle = "rgba(0,255,0,100)";
-	for (var y = startY; y < endY; y += sprtH) {
-		for (var x = startX; x < endX; x += sprtW) {
-			if (sprtC > 0) {
-				ctx.beginPath();
-				ctx.moveTo(x,y);
-				ctx.lineTo(x+sprtW,y);
-				ctx.lineTo(x+sprtW,y+sprtH);
-				ctx.lineTo(x,y+sprtH);
-				ctx.lineTo(x,y);
-				ctx.stroke();			
-				sprtC--;	
-			} else {
-				ctx.fillRect(x,y,sprtW,sprtH);
-			}
-			maxsprtC++;
-		}	
-	}
-	if (originalsprtC > maxsprtC) {
-		setElemValue('bobC', maxsprtC);
-	}
-
-	if (!_updateOnly) {
-		var e = {clientX:realMouseCoord.x, clientY:realMouseCoord.y};
-		var elm = getElem('preview').style;
-		elm.display = "block";
-		elm.left = (e.clientX + 10).toString()+"px";
-		elm.top = (e.clientY  - v(ctx.height * 3/4)).toString()+"px";
-	}
-}
-
-function closePreview() {
-	var elm = getElem('preview').style;
-	elm.display = "none";
-}
-
-
-function onNewFrameName() {
-	var name = getElemValue('frameName');
-	for (var i = 0;  i< frames.length; i++) {
-		if (name === frames[i].label) {
-			alert("label '" + name + "' already used for frame #" + i);
-			setElemValue('frameName', name + "_2");
-			rerturn;
+		} catch (error) {
+			alert("Can't load this file, make sure it's a valid SVG file.");
 		}
-	}
+		setTimeout(function() { refreshLists(); }, 500);
+	};
+	reader.readAsText(file);
 }
 
-
-function framesToSprites() {
-	if (global_palette.length > 16) {
-		alert("Can't export Sprites:  - Wrong palette size - Found " + global_palette.length + " colors, but the Sprites export supports 16 colors max.");
-		return;
-	}
-
-	for (var i = 0; i < frames.length; i++) {
-		var f = frames[i];
-		if (f.w > 16) {
-			alert("In grab frames mode, sprites must be 16 pix wide maximum, but frame #" + i + " (" + f.label + ") is " + f.w + " pix wide" );
-			return;
-		}
-	}
-
-	inGrabContext = true;
-	spriteWindow = {x: grab_startx, y:grab_starty, w:grab_curx - grab_startx, h:grab_cury - grab_starty};
-	setElemValue('sprtC', 1);
-	setElemValue('sprtH', spriteWindow.h);
-	setElemValue('viewShow','viewShow_sprites');
-	setElemChecked('includeCtrl', true);
-	setElemValue('sprtMode','sprtASM');
-	setElemChecked('includePal', false);
-
-	startSaveSession();
-	for (var i = 0; i < frames.length; i++) {
-		var f = frames[i];
-		spriteWindow = {x:f.x, y:f.y, w:f.w, h:f.h, label:f.label};
-		saveSprite({x:f.x, y:f.y, w:f.w, h:f.h, label:f.label});
-	}
-	saveSession += export_fileName + "_palette:\n";			
-	saveSession = savePalette(saveSession) + "\n\n";
-
-	endSaveSession();
-	
-	exitGrab();
-}
-
-function framesToBobs() {
-	alert("Not yet implemented. life is cruel. Reach me on FaceBook or comment on Pouet if you need this one!");
-	return;
-	if (global_palette.length > 32) {
-		alert("Can't export Bobs:  - Wrong palette size - Found " + global_palette.length + " colors, but the Bobs export supports 32 colors max. You can only use 'Save RGB' with this image .");
-		return;
-	}
-
-	inGrabContext = true;
-	spriteWindow = {x: grab_startx, y:grab_starty, w:grab_curx - grab_startx, h:grab_cury - grab_starty};
-	setElemValue('bobC', 1);
-	setElemValue('bobW', spriteWindow.w);
-	setElemValue('bobH', spriteWindow.h);
-	setElemValue('viewShow','viewShow_bobs');
-	setElemValue('bobMode','bobASM');
-	setElemChecked('bobIncludePal', false);
-	
-	startSaveSession();
-	for (var i = 0; i < frames.length; i++) {
-		var f = frames[i];
-		spriteWindow = {x:f.x, y:f.y, w:f.w, h:f.h, label:f.label};
-		saveBob({x:f.x, y:f.y, w:f.w, h:f.h, label:f.label});
-	}
-	saveSession += export_fileName + "_palette:\n";			
-	saveSession = savePalette(saveSession) + "\n\n";
-
-	endSaveSession();
-	
-	exitGrab();
-}
 
 
 function getBuffer(fileData) {
@@ -1535,49 +1448,6 @@ function getBuffer(fileData) {
 		resolve(bytes);
 	  }
   }
-}
-
-function importPalette() {
-	var mode = getElemValue('loadpalettefrom');
-	if (mode === 'loadpalettefrom_binary') {
-		let input = document.createElement('input');
-		input.type = 'file';
-		input.onchange = _ => {
-				  let files =   Array.from(input.files);
-				  fileData = new Blob([files[0]]);
-				  // Pass getBuffer to promise.
-				  var promise = new Promise(getBuffer(fileData));
-				  // Wait for promise to be resolved, or log error.
-				  promise.then(function(data) {
-					remapPaletteFromBin(data);
-				  }).catch(function(err) {
-					console.log('Error: ',err);
-				  });
-		};
-		input.click();	
-	} else if (mode === 'loadpalettefrom_asm') {
-		let input = document.createElement('input');
-		input.type = 'file';
-		input.onchange = _ => {
-				  let files =   Array.from(input.files);
-				  var reader = new FileReader();
-				  reader.onload = function(e) {
-					  remapPaletteFromText(e.target.result);
-				  };
-				  reader.readAsText(files[0]);
-		};
-		input.click();	
-		} else if (mode === 'loadpalettefrom_clip') {
-			navigator.clipboard.readText()
-			.then(text => {
-				remapPaletteFromText(text);
-			})
-			.catch(err => {
-			  alert('Failed to read clipboard contents: ', err);
-			});
-		} else {
-			alert('unknow load palette mode');
-		}
 }
 
 

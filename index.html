@@ -9,6 +9,9 @@
    
     <script type="text/javascript" src="js/3rdparty/jquery.min.js"></script>
     <script type="text/javascript" src="js/3rdparty/FileSaver/FileSaver.js"></script>
+    <script type="text/javascript" src="js/3rdparty/contour.js"></script>
+    
+    
     <script type="text/javascript" src="js/kickstart.js"></script>                                  <!-- KICKSTART -->
     <script type="text/javascript" src="js/dragdrop.js"></script>
     <script type="text/javascript" src="js/Keyboard.js"></script>
@@ -16,8 +19,14 @@
     <script type="text/javascript" src="js/exporters2.js"></script>
     <script type="text/javascript" src="js/main.js"></script>
 </head>
-<!-- ===================================== END HEADER ===================================== -->
+<!-- ===================================== END HEADER ===================================== 
+https://stackoverflow.com/questions/32699721/javascript-extract-video-frames-reliably
+https://github.com/jankovicsandras/imagetracerjs
+https://wordsandbuttons.online/simple_image_vectorization.html
+lui ikl vectorise bien, yaurait qu'à choper le format: https://www.autotracer.org/
+cool pour lire le svg: https://www.npmjs.com/package/svg-points
 
+-->
 
       <body onload="onLoad()" onkeydown="keyDown(event)" onkeyup="keyUp(event)">
           <center><h3><i>Reference Image</i></h3></center>
@@ -49,6 +58,8 @@
                 Interp&nbsp;<input type="range" min="0" max="32" value="0" class="slider" id="interp">
                 <input id="file-input2" type="file" name="name" style="display: none;" />
                 <button type="button" onclick="if (!workCanvas) alert('Please load an image before loading a Path!'); else document.getElementById('file-input2').click();">Load</button>
+                <input id="file-input3" type="file" name="name" style="display: none;" />
+                <button type="button" onclick="Contour();">SVG</button>
                 <button type="button" onclick="downloadJSON(MYDATA, 'PathTool.txt', 'text/plain');">Save</button>
                 <button type="button" onclick="play(1);">Play1</button>
                 <button type="button" onclick="play(2);">Play2</button>
@@ -57,23 +68,24 @@
               <hr>
             <div id="saveBpl" style='background-color:rgba(200,200,200,0.5);'>
                 <center><h3><i>Export</i></h3></center>
-            </div>
+                <label for="export_interp">Interpolation: </label>
+                <select name="export_interp" id="export_interp">
+                  <option value="1">No data</option>
+                  <option value="2">Export slopes</option>
+                  <option value="3">Export all points</option>
+                </select>
+
+                <label for="export_coord">Coordinates: </label>
+                <select name="export_coord" id="export_coord">
+                  <option value="1">16 bit coord</option>
+                  <option value="2">4 bit delta coord</option>
+                  <option value="2">16 bit ofs</option>
+                </select>
+              </div>
           <br><br>
           <div id = "mouseFollow" style = "display:none; position:fixed; z-index:10; background-color: #6B6B6B; color: white;">
             <label id="mouseCoordLabel">moncul</label>
           </div>
-          <div id = "preview" style = "display:none; position:fixed; z-index:10; background-color: #6B6B6B; color: white;">
-            <canvas id='previewCanvas'></canvas>
-            <center><br><button type="button" class="fa fa-times" onclick="closePreview();"> Close</button></center>
-          </div>
-          <div id = "grabDone" style = "display:none; position:absolute; z-index:10; background-color: rgba(50,50,50,0.7);">
-            <center>
-            <button type="button" onclick="grabToSprites()">Export Sprites</button><br>
-            <button type="button" onclick="grabToBobs()">Export Bobs</button><br>
-            <button type="button" onclick="addFrame()">Grab Frame</button><br>
-            <button type="button" onclick="onGrabCancelButton()"> Cancel</button><br>
-            </center>
-         </div>
          <div id = "addFrame" style = "display:none; position:absolute; z-index:10; background-color: rgba(50,50,50,0.7); color:white; margin-left:10px">
             <center>
             <h4>Grabbed:</h4>
@@ -88,7 +100,6 @@
          </div>
          <!-- ===================================== START FOOTER ===================================== -->
           <div id="footer">
-                <img src="data/logo.png">
                 <br>All bugs by Soundy
           </div>
 
