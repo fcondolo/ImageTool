@@ -1397,15 +1397,50 @@ function getPoints(str)
 }
 
 function Contour() {
+	const minDist = 50;
 	const out = fincContour();
 	let pts = [];
+	prevprevX1 = -1000;
+	prevprevY1 = -1000;
+	prevprevX2 = -2000;
+	prevprevY2 = -2000;
+	prevX = prevprevX1;
+	prevY = prevprevY1;
 	for (var i = 0; i < out.length; i++) {
 		const pt = out[i];
-		pts.push({
-			x : pt[0] / workCanvas.width,
-			y : pt[1] / workCanvas.height,
-			r: 1
-		});
+		let d = Math.sqrt((pt[0]-prevX)*(pt[0]-prevX)+(pt[1]-prevY)*(pt[1]-prevY));
+		let prevVx = prevprevX1 - prevprevX2;
+		let prevVy = prevprevY1 - prevprevY2;
+		let n = Math.sqrt(prevVx*prevVx + prevVy*prevVy);
+		if (n > 0) {
+			prevVx /= n;
+			prevVy /= n;
+			let thisVx = pt[0] - prevprevX1;
+			let thisVy = pt[1] - prevprevY1;
+			n = Math.sqrt(thisVx*thisVx + thisVy*thisVy);
+			if (n > 0) {
+				thisVx /= n;
+				thisVy /= n;
+				const dot = thisVx * prevVx + thisVy * prevVy;
+				if (Math.abs(dot) < Math.PI * 0.28) {
+					prevprevX2 = prevprevX1;
+					prevprevY2 = prevprevY1;
+					prevprevX1 = pt[0];
+					prevprevY1 = pt[1];
+					if (d>1)
+						d = minDist * 2;			
+				}
+			}
+		}
+		if ( d > minDist) {
+			pts.push({
+				x : pt[0] / workCanvas.width,
+				y : pt[1] / workCanvas.height,
+				r: 1
+			});		
+			prevX = pt[0];
+			prevY = pt[1];
+		}
 	}
 	MYDATA.lists.push({name: "generated", points:pts});
 	refreshLists();
