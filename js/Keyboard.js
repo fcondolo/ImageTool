@@ -15,6 +15,7 @@ function keyDown(event) {
 function keyUp(event) {
     var key = event.keyCode;
     switch (key) {
+        case 8 : if(SHIFT) { delCurPt(); event.preventDefault(); } break; // Backspace
         // Special keys
         case 16: SHIFT = false; break;
         case 17: CTRL = false; break; // PC
@@ -27,11 +28,11 @@ function keyUp(event) {
 	    case 34: break; // pag down
 
         // Arrows
-        case 37: break; // left
-        case 38: break; // up
-        case 39: break; // right
-        case 40: break; // down
-        case 46: onEditorDel(); break; // del
+        case 37: if(SHIFT) { moveCurPt(-1,0); event.preventDefault(); } break; // left
+        case 38: if(SHIFT) { moveCurPt(0,-1); event.preventDefault(); } break; // up
+        case 39: if(SHIFT) { moveCurPt(1,0); event.preventDefault(); } break; // right
+        case 40: if(SHIFT) { moveCurPt(0,1); event.preventDefault(); } break; // down
+        case 46: if(SHIFT) { delCurPt(); event.preventDefault(); } break; // del
 
         // Numbers
 	    case 48: break; // 0

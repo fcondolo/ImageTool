@@ -75,10 +75,20 @@ function precalcSprites() {
 }
 
 
-function drawPoint(_x, _y, _r) {
+function drawPoint(_x, _y, _r, _animate) {
+	if (_animate) {
+		viewContext.fillStyle = "rgba(255,0,255,255)";
+		if (_r < 4)
+			_r *= 1 + 3 * Math.abs(Math.sin(anim_timer/50));
+		else
+			_r *= 1 + Math.sin(anim_timer/100);
+	}
 	viewContext.beginPath();
 	viewContext.arc(_x, _y, _r, 0, 2 * Math.PI);
 	viewContext.fill();
+	if (_animate) {
+		viewContext.fillStyle = "rgba(0,255,0,255)";
+	}
 }
 
 var curSprtFrame1 = 0
@@ -90,6 +100,7 @@ function buildViewImage(_time) {
 	if (!viewCanvas)
 		return;
 
+	onptsel();
 	var thisView = getCurrentView();
 	var w = thisView.w;
 	var h = thisView.h;
@@ -175,7 +186,7 @@ function drawCurrentListPoints() {
 		for (var i = 0; i < PATH_PTS.length; i++) {
 			let coord = {x:PATH_PTS[i].x * destW,y:PATH_PTS[i].y * destH};
 			var r = PATH_PTS[i].r;
-			drawPoint(coord.x, coord.y, r);
+			drawPoint(coord.x, coord.y, r, (i === CUR_PT_INDEX));
 			if (i > 0) {
 				if (interpCount > 0) {
 					let slopex = (coord.x - prevx) / interpCount;

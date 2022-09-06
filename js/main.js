@@ -13,6 +13,7 @@ var MYDATA = {
 	interp : 0
 };
 
+var CUR_PT_INDEX = -1;
 var UNDOREDO = [];
 var UNDOREDO_INDEX = 0;
 
@@ -1396,52 +1397,109 @@ function getPoints(str)
     return res;
 }
 
+
+function findPrevPt(_table, _i) {
+	for (var i = _i; i >= 0; i--) {
+		const pt = _table[i];
+		if (!pt.removeable)
+			return pt;
+	}
+	return null;
+}
+
+function findNextPt(_table, _i) {
+	for (var i = _i; i < _table.length; i++) {
+		const pt = _table[i];
+		if (!pt.removeable)
+			return pt;
+	}
+	return null;
+}
+
 function Contour() {
 	const minDist = 50;
 	const out = fincContour();
 	let pts = [];
-	prevprevX1 = -1000;
-	prevprevY1 = -1000;
-	prevprevX2 = -2000;
-	prevprevY2 = -2000;
-	prevX = prevprevX1;
-	prevY = prevprevY1;
+
+	prevX = -1000;
+	prevY = -1000;
+
 	for (var i = 0; i < out.length; i++) {
 		const pt = out[i];
-		let d = Math.sqrt((pt[0]-prevX)*(pt[0]-prevX)+(pt[1]-prevY)*(pt[1]-prevY));
-		let prevVx = prevprevX1 - prevprevX2;
-		let prevVy = prevprevY1 - prevprevY2;
-		let n = Math.sqrt(prevVx*prevVx + prevVy*prevVy);
-		if (n > 0) {
-			prevVx /= n;
-			prevVy /= n;
-			let thisVx = pt[0] - prevprevX1;
-			let thisVy = pt[1] - prevprevY1;
-			n = Math.sqrt(thisVx*thisVx + thisVy*thisVy);
-			if (n > 0) {
-				thisVx /= n;
-				thisVy /= n;
-				const dot = thisVx * prevVx + thisVy * prevVy;
-				if (Math.abs(dot) < Math.PI * 0.28) {
-					prevprevX2 = prevprevX1;
-					prevprevY2 = prevprevY1;
-					prevprevX1 = pt[0];
-					prevprevY1 = pt[1];
-					if (d>1)
-						d = minDist * 2;			
-				}
-			}
+		let candidate = {
+			x : pt[0],
+			y : pt[1],
+			r: 1,
+			removeable : false
 		}
-		if ( d > minDist) {
-			pts.push({
-				x : pt[0] / workCanvas.width,
-				y : pt[1] / workCanvas.height,
-				r: 1
-			});		
+		let d = Math.sqrt((pt[0]-prevX)*(pt[0]-prevX)+(pt[1]-prevY)*(pt[1]-prevY));
+		if ( d > 1) {
 			prevX = pt[0];
 			prevY = pt[1];
+			pts.push(candidate);
 		}
 	}
+
+	prevX = -1000;
+	prevY = -1000;
+	for (var i = 0; i < pts.length; i++) {
+		let pt = pts[i];
+		let d = Math.sqrt((pt.x-prevX)*(pt.x-prevX)+(pt.y-prevY)*(pt.y-prevY));
+		if ( d < minDist) {
+			pt.removeable = true;
+		} else {
+			prevX = pt.x;
+			prevY = pt.y;
+		}
+	}
+
+	for (var i = 1; i < pts.length-1; i++) {
+		let prevPt = findPrevPt(pts, i-1);
+		let thisPt = pts[i];
+		let nextPt = findNextPt(pts, i+1);
+		if (nextPt !== null && prevPt !== null) {
+			let prevVx = thisPt.x - prevPt.x;
+			let prevVy = thisPt.y - prevPt.y;
+			let n = Math.sqrt(prevVx*prevVx + prevVy*prevVy);
+			if (n > 0) {
+				prevVx /= n;
+				prevVy /= n;
+				let nextVx = nextPt.x - thisPt.x;
+				let nextVy = nextPt.y - thisPt.y;
+				n = Math.sqrt(nextVx*nextVx + nextVy*nextVy);
+				if (n > 0) {
+					nextVx /= n;
+					nextVx /= n;
+					const mydot = Math.abs(nextVx * prevVx + nextVy * prevVy);
+			/*		if (
+						(Math.sign(nextVx) !== Math.sign(prevVx)) ||
+						(Math.sign(nextVy) !== Math.sign(prevVy))) {
+							prevPt.removeable = false;
+							thisPt.removeable = false;
+							nextPt.removeable = false;	
+						}*/
+					if (Math.abs(mydot) < 0.9) {
+						prevPt.removeable = false;
+						thisPt.removeable = false;
+						nextPt.removeable = false;
+					}
+				}
+			}
+	
+		}
+		
+	}
+
+	for (var i = 0; i < pts.length; i++) {
+		pts[i].x /= workCanvas.width;
+		pts[i].y /= workCanvas.height;
+		if (pts[i].removeable) {
+			pts.splice(i,1);
+			if (i>0)
+				i--;
+		}
+	}
+
 	MYDATA.lists.push({name: "generated", points:pts});
 	refreshLists();
 }
@@ -1655,6 +1713,7 @@ function refreshPointsList() {
 		content += '<option value="' + i + '"> ' + s + ' </option>';
 	}
 	elm.innerHTML = content;
+	onptsel();
 }
 
 function addNewList(_name) {
@@ -1711,5 +1770,41 @@ function redo() {
 		UNDOREDO_INDEX++;
 		MYDATA = JSON.parse(JSON.stringify(UNDOREDO[UNDOREDO_INDEX]));
 		refreshLists();
+	}
+}
+
+function onptsel() {
+	const elm = getElem("ptslist");
+	if (elm.value && elm.value.length > 0)
+		CUR_PT_INDEX = parseInt(elm.value);
+	else
+		CUR_PT_INDEX = -1;
+}
+
+function moveCurPt(_dx, _dy) {
+	onptsel();
+	if (CUR_PT_INDEX >= 0) {
+		const index = getElem("alllists").selectedIndex;
+		if (index >= 0 && index < MYDATA.lists.length) {
+			let PATH_PTS = MYDATA.lists[index].points;
+			let coord = {x:PATH_PTS[CUR_PT_INDEX].x * workCanvas.width, y:PATH_PTS[CUR_PT_INDEX].y * workCanvas.height};
+			coord.x += _dx;
+			coord.y += _dy;
+			PATH_PTS[CUR_PT_INDEX].x = coord.x / workCanvas.width;
+			PATH_PTS[CUR_PT_INDEX].y = coord.y / workCanvas.height;
+		}	
+		pushundoredo();
+	}
+}
+
+function delCurPt(){
+	if (CUR_PT_INDEX >= 0) {
+		const index = getElem("alllists").selectedIndex;
+		if (index >= 0 && index < MYDATA.lists.length) {
+			let PATH_PTS = MYDATA.lists[index].points;
+			PATH_PTS.splice(CUR_PT_INDEX, 1);
+			pushundoredo();
+			refreshPointsList();
+		}	
 	}
 }
