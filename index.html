@@ -27,6 +27,7 @@
               <center>
                   <img id='refImg' src="data/refImg.png">
                   <br><input type="file" id="file-input"/>
+                  <input type="checkbox" id="showCards">
                   <br /><br />            
                   <canvas id='workCanvas'></canvas>
               </center>
@@ -45,7 +46,9 @@
               </select>
               <br>
                 <select name="ptslist" id="ptslist" size="0" onselect="onptsel();">  
-              </select>                  
+              </select>
+              <br>
+              <label id="ptcount"></label>
               </div>
               <div class="col_9" style='background-color:rgba(0,0,0,0);'>
                 BobSize&nbsp;<input type="range" min="1" max="32" value="2" class="slider" id="bobsize">
@@ -57,6 +60,7 @@
                 <button type="button" onclick="downloadJSON(MYDATA, 'PathTool.txt', 'text/plain');">Save</button>
                 <button type="button" onclick="play(1);">Play1</button>
                 <button type="button" onclick="play(2);">Play2</button>
+                <br><input type="range" min="1" max="1000" value="500" class="slider" id="contourRange" onchange="Contour();">
                 <br><canvas id='viewCanvas' type="overflow:scroll;"></canvas>
               </div>
               <hr>

@@ -1416,8 +1416,34 @@ function findNextPt(_table, _i) {
 	return null;
 }
 
+function sqr (x) {
+	return x * x;
+  }
+  
+  function dist2 (v, w) {
+	return sqr(v[0] - w[0]) + sqr(v[1] - w[1]);
+  }
+  
+  // p - point
+  // v - start point of segment
+  // w - end point of segment
+  function distToSegmentSquared (p, v, w) {
+	var l2 = dist2(v, w);
+	if (l2 === 0) return dist2(p, v);
+	var t = ((p[0] - v[0]) * (w[0] - v[0]) + (p[1] - v[1]) * (w[1] - v[1])) / l2;
+	t = Math.max(0, Math.min(1, t));
+	return dist2(p, [ v[0] + t * (w[0] - v[0]), v[1] + t * (w[1] - v[1]) ]);
+  }
+  
+  // p - point
+  // v - start point of segment
+  // w - end point of segment
+  function distToSegment (p, v, w) {
+	return Math.sqrt(distToSegmentSquared(p, v, w));
+  }
+
 function Contour() {
-	const minDist = 50;
+	const minDist = 4;
 	const out = fincContour();
 	let pts = [];
 
@@ -1453,6 +1479,8 @@ function Contour() {
 		}
 	}
 
+	/*
+	// DOT PROD FILTER
 	for (var i = 1; i < pts.length-1; i++) {
 		let prevPt = findPrevPt(pts, i-1);
 		let thisPt = pts[i];
@@ -1471,13 +1499,6 @@ function Contour() {
 					nextVx /= n;
 					nextVx /= n;
 					const mydot = Math.abs(nextVx * prevVx + nextVy * prevVy);
-			/*		if (
-						(Math.sign(nextVx) !== Math.sign(prevVx)) ||
-						(Math.sign(nextVy) !== Math.sign(prevVy))) {
-							prevPt.removeable = false;
-							thisPt.removeable = false;
-							nextPt.removeable = false;	
-						}*/
 					if (Math.abs(mydot) < 0.9) {
 						prevPt.removeable = false;
 						thisPt.removeable = false;
@@ -1489,7 +1510,34 @@ function Contour() {
 		}
 		
 	}
+	*/
 
+	const thres = parseInt(getElem("contourRange").value);
+	for (var start = 0; start < pts.length-1; start++) {
+		let startPt = pts[start];
+		let p1 = [startPt.x,startPt.y];
+		for (var next = start+1; next < pts.length; next++) {
+			let nextPt = pts[next];
+			let p2 = [nextPt.x,nextPt.y];
+			let totald = 0;
+			for (var middle = start+1; middle < next; middle++) {
+				let midPt = pts[middle];
+				let mid = [midPt.x,midPt.y];
+				let d = distToSegment(mid,p1,p2);
+				totald += d;
+			}
+			if (totald > viewCanvas.width/thres) {
+				for (var middle = start+1; middle < next; middle++) {
+					let midPt = pts[middle];
+					midPt.removeable = true;
+				}
+				start = next;
+				break;
+			}
+		}
+	}
+
+	// SCALE & REMOVE REMOVEABLE POINTS
 	for (var i = 0; i < pts.length; i++) {
 		pts[i].x /= workCanvas.width;
 		pts[i].y /= workCanvas.height;
@@ -1713,6 +1761,7 @@ function refreshPointsList() {
 		content += '<option value="' + i + '"> ' + s + ' </option>';
 	}
 	elm.innerHTML = content;
+	getElem("ptcount").innerHTML = "count: " + lst.length;
 	onptsel();
 }
 

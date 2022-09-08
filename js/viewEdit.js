@@ -87,7 +87,7 @@ function drawPoint(_x, _y, _r, _animate) {
 	viewContext.arc(_x, _y, _r, 0, 2 * Math.PI);
 	viewContext.fill();
 	if (_animate) {
-		viewContext.fillStyle = "rgba(0,255,0,255)";
+		viewContext.fillStyle = "rgba(0,0,255,255)";
 	}
 }
 
@@ -95,6 +95,27 @@ var curSprtFrame1 = 0
 var curSprtFrame2 = prtcle_frames_count/4;
 var curSprtFrame3 = prtcle_frames_count/4*2;
 var curSprtFrame4 = prtcle_frames_count/4*3;
+
+
+function showCards() {
+	const w = viewCanvas.width;
+	const h = viewCanvas.height;
+	const centerx = 0.5;
+	const centery = 0.5;
+	const curvelen = 200;
+	const minrad = 0.05;
+	const radincr = 0.005;
+	const curveFactor = 0.2;
+
+	let rad = minrad;
+	for (let i = 0; i < curvelen; i++) {
+		const angle = i * curveFactor;
+		let x = centerx + rad * Math.cos(angle);
+		let y = centery + rad * Math.sin(angle);
+		drawPoint(x * w, y * h, 4);
+		rad += radincr;
+	}
+}
 
 function buildViewImage(_time) {
 	if (!viewCanvas)
@@ -119,7 +140,7 @@ function buildViewImage(_time) {
 	viewContext.imageSmoothingEnabled = false;
 
 
-	viewContext.fillStyle = "rgba(0,255,0,255)";
+	viewContext.fillStyle = "rgba(0,0,255,255)";
 
 	viewContext.resetTransform();
 	viewContext.translate(destW / 2, destH / 2 )
@@ -143,7 +164,13 @@ function buildViewImage(_time) {
 	viewContext.resetTransform();
 	drawPoint(grab_curx, grab_cury, getElemInt10('bobsize') * cameraZoom);
 
+
+	if (getElem("showCards").checked) {
+		showCards();
+	}
+
 	return;
+	
 	//DRAW SPRITES
 	viewContext.fillStyle = "rgba(255,255,255,255)";
 
