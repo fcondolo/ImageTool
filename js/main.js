@@ -6,7 +6,13 @@ pixelsPaletteIndex : index in palette of each pixel in the work image
 
 */
 
-
+var VIDEO_DATA = {
+	active : false,
+	video : null,
+	processed : false,
+	processedFrames : [],
+	curFrame : 0
+}
 
 var MYDATA = {
 	lists : [],
@@ -45,7 +51,6 @@ var pixelsPaletteIndex;
 var global_palette = [];
 
 var cropX, cropY, cropW, cropH;
-var views = [];
 var viewX, viewY, viewW, viewH;
 var curViewIndex;
 var realMouseCoord = {x:0,y:0};
@@ -85,11 +90,33 @@ function viewShow_step(timestamp) {
   if (delta >= FPS) {
 	viewShow_previousTimeStamp = timestamp;
 	anim_timer += FPS;
+/*	if (VIDEO_DATA.active && VIDEO_DATA.video) {
+		VIDEO_DATA.video.seekForward(1, processOneVideoFrame);		
+	}*/
 	buildViewImage(anim_timer);
   }
   window.requestAnimationFrame(viewShow_step);
 }
 
+function getParameters() {
+  
+    // Address of the current window
+    address = window.location.search
+  
+    // Returns a URLSearchParams object instance
+    parameterList = new URLSearchParams(address)
+  
+    // Created a map which holds key value pairs
+    let map = new Map()
+  
+    // Storing every key value pair in the map
+    parameterList.forEach((value, key) => {
+        map.set(key, value)
+    })
+  
+    // Returning the map of GET parameters
+    return map
+}
 
 function getElem(_id) {
 	var elm = document.getElementById(_id);
@@ -199,6 +226,12 @@ function setElemChecked(_id,_value) {
 }
 
 function onLoad() {
+	const params = getParameters();
+	const anim = params.get('anim');
+	if (anim && anim.length > 0) {
+		VIDEO_DATA.active = true;
+	}
+
 	precalcSprites();
 	document.getElementById('file-input').addEventListener('change', readSingleFile, false);
 	document.getElementById('file-input2').addEventListener('change', readJSONFile, false);
@@ -224,7 +257,38 @@ function onLoad() {
 	var dropZone = getElem('refImg');
 	dropZone.addEventListener('dragover', handleDragOver, false);
 	dropZone.addEventListener('drop', handleFileSelect, false);
-	
+
+	if (VIDEO_DATA.active) {
+		VIDEO_DATA.video = VideoFrame({
+			id: 'video',
+			frameRate: FrameRates.film,
+			callback: function(response) {
+			}
+		});	
+		getElem("video").controls = false;
+	} else {
+		let elm = getElem("video");
+		elm.width = 0;
+		elm.height = 0;
+		elm.style.visibility = "hidden";
+	}
+
+	workCanvas = getElem('workCanvas');
+	workContext = workCanvas.getContext('2d');
+	viewCanvas = getElem('viewCanvas');
+	viewContext = viewCanvas.getContext('2d');
+
+	viewCanvas.addEventListener('mousedown', onPointerDown)
+	viewCanvas.addEventListener('touchstart', (e) => handleTouch(e, onPointerDown))
+	viewCanvas.addEventListener('mouseup', onPointerUp)
+	viewCanvas.addEventListener('touchend',  (e) => handleTouch(e, onPointerUp))
+	viewCanvas.addEventListener('mousemove', onPointerMove)
+	viewCanvas.addEventListener('touchmove', (e) => handleTouch(e, onPointerMove))
+	viewCanvas.addEventListener( 'wheel', (e) => adjustZoom(e.deltaY*SCROLL_SENSITIVITY))
+
+	zoomDestCoord.x = 0; // relative to center, normalized
+	zoomDestCoord.y = 0;
+
 	window.requestAnimationFrame(viewShow_step);
 }
 
@@ -326,41 +390,9 @@ function writeCropValues(x,y,w,h) {
 	getElem('cropW').value = cropW;
 	getElem('cropH').value = cropH;
 */
-	resetViewsToCropValues();
 }
 
 
-function addView(_x,_y,_w,_h,_setCurrent) {
-	views.push({x:_x, y:_y, w:_w, h:_h});
-	if (_setCurrent) {
-		curViewIndex = views.length - 1;
-		spriteWindow = {x:_x, y:_y, w:_w, h:_h};
-	}
-}
-
-function popView(_x,_y,_w,_h) {
-	if (views.length > 1) {
-		views.pop();
-	}
-	if (curViewIndex >= views.length)
-		curViewIndex = views.length - 1;
-	if (curViewIndex < 0)
-		curViewIndex = 0;
-	spriteWindow = {x:views[curViewIndex].x, y:views[curViewIndex].y, w:views[curViewIndex].w, h:views[curViewIndex].h};
-	return {x:views[curViewIndex].x, y:views[curViewIndex].y, w:views[curViewIndex].w, h:views[curViewIndex].h};
-}
-
-
-function resetViewsToCropValues() {
-	views = [];
-	addView(cropX, cropY, cropW, cropH, true);
-}
-
-function getCurrentView() {
-	if (curViewIndex < 0) curViewIndex = 0;
-	if (curViewIndex >= views.length) curViewIndex = views.length-1;
-	return views[curViewIndex];
-}
 
 function onCrop(){
 	var tcropX = parseInt(getElem('cropX').value,10);
@@ -420,21 +452,6 @@ function onDrop(_fname) {
 	sourceImageData = sourceContext.getImageData(0, 0, w, h);
 	sourceImagePixels = sourceImageData.data;
 
-	workCanvas = getElem('workCanvas');
-	workContext = workCanvas.getContext('2d');
-	viewCanvas = getElem('viewCanvas');
-	viewContext = viewCanvas.getContext('2d');
-
-	viewCanvas.addEventListener('mousedown', onPointerDown)
-	viewCanvas.addEventListener('touchstart', (e) => handleTouch(e, onPointerDown))
-	viewCanvas.addEventListener('mouseup', onPointerUp)
-	viewCanvas.addEventListener('touchend',  (e) => handleTouch(e, onPointerUp))
-	viewCanvas.addEventListener('mousemove', onPointerMove)
-	viewCanvas.addEventListener('touchmove', (e) => handleTouch(e, onPointerMove))
-	viewCanvas.addEventListener( 'wheel', (e) => adjustZoom(e.deltaY*SCROLL_SENSITIVITY))
-
-	zoomDestCoord.x = 0; // relative to center, normalized
-	zoomDestCoord.y = 0;
 
 	buildWorkImage();
 	buildPaletteFromWorkImage();
@@ -447,7 +464,10 @@ function onDrop(_fname) {
 }
 
 function grid(_x,_y) {
-	const d = workImagePixels[4 * (_x + workContext.width * _y) + 1];
+	const ofs = 4 * (_x + workContext.width * _y);
+	if (ofs < 0) return 0;
+	if (ofs >= workImagePixels.length-1) return 0;
+	const d = workImagePixels[ofs + 1]; // +1 for green
 	if (d > 100)
 		return 0;
 	return 255;
@@ -1078,7 +1098,6 @@ function onMouseUp(e) {
 }
 
 function onMouseMove(e) {
-
 	realMouseCoord.x = e.clientX;
 	realMouseCoord.y = e.clientY;
 	if (isInGrabZone(e.clientX, e.clientY)) {
@@ -1089,7 +1108,10 @@ function onMouseMove(e) {
 		var m = getMousePos(viewCanvas,e);
 		grab_curx = m.x;
 		grab_cury = m.y;
-		getElem("mouseCoordLabel").innerHTML = v(m.x) + ", " + v(m.y);
+		if (VIDEO_DATA.active)
+			getElem("mouseCoordLabel").innerHTML = "frame: " + Math.floor(VIDEO_DATA.curFrame);
+		else
+			getElem("mouseCoordLabel").innerHTML = v(m.x) + ", " + v(m.y);
 	}
 	else {
 		var elm = getElem('mouseFollow').style;
@@ -1098,6 +1120,7 @@ function onMouseMove(e) {
 }
 
 function onMouseClick(e) {
+	if (VIDEO_DATA.active) return;
 	if (SHIFT && CTRL) return;
 	if (isInGrabZone(e.clientX, e.clientY)) {	
 		if (CTRL) {
@@ -1442,7 +1465,7 @@ function sqr (x) {
 	return Math.sqrt(distToSegmentSquared(p, v, w));
   }
 
-function Contour() {
+function Contour(_name) {
 	const minDist = 4;
 	const out = fincContour();
 	let pts = [];
@@ -1520,18 +1543,21 @@ function Contour() {
 			let nextPt = pts[next];
 			let p2 = [nextPt.x,nextPt.y];
 			let totald = 0;
-			for (var middle = start+1; middle < next; middle++) {
+			let middle = start + 1;
+			for (; middle < next; middle++) {
 				let midPt = pts[middle];
 				let mid = [midPt.x,midPt.y];
 				let d = distToSegment(mid,p1,p2);
-				totald += d;
+				totald = d;
+				if (totald > viewCanvas.width/thres)
+					break;
 			}
 			if (totald > viewCanvas.width/thres) {
-				for (var middle = start+1; middle < next; middle++) {
-					let midPt = pts[middle];
+				for (var it = start+1; it < middle; it++) {
+					let midPt = pts[it];
 					midPt.removeable = true;
 				}
-				start = next;
+				start = middle;
 				break;
 			}
 		}
@@ -1548,7 +1574,9 @@ function Contour() {
 		}
 	}
 
-	MYDATA.lists.push({name: "generated", points:pts});
+	if (!_name || (_name.length === 0))
+		_name = "generated";
+	MYDATA.lists.push({name: _name, points:pts});
 	refreshLists();
 }
 
@@ -1856,4 +1884,18 @@ function delCurPt(){
 			refreshPointsList();
 		}	
 	}
+}
+
+function animPrev() {
+	if (VIDEO_DATA.active && VIDEO_DATA.video) {
+		VIDEO_DATA.curFrame--;
+		VIDEO_DATA.video.seekBackward(1, processOneVideoFrame);
+	}	
+}
+
+function animNext() {
+	if (VIDEO_DATA.active && VIDEO_DATA.video) {
+		VIDEO_DATA.curFrame++;
+		VIDEO_DATA.video.seekForward(1, processOneVideoFrame);
+	}		
 }

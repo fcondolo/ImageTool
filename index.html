@@ -10,6 +10,7 @@
     <script type="text/javascript" src="js/3rdparty/jquery.min.js"></script>
     <script type="text/javascript" src="js/3rdparty/FileSaver/FileSaver.js"></script>
     <script type="text/javascript" src="js/3rdparty/contour.js"></script>
+    <script type="text/javascript" src="js/3rdparty/VideoFrame.min.js"></script>
     
     
     <script type="text/javascript" src="js/kickstart.js"></script>                                  <!-- KICKSTART -->
@@ -20,6 +21,7 @@
     <script type="text/javascript" src="js/main.js"></script>
 </head>
 <!-- ===================================== END HEADER ===================================== 
+  https://allensarkisyan.github.io/VideoFrameDocs/#!/documentation
 -->
 
       <body onload="onLoad()" onkeydown="keyDown(event)" onkeyup="keyUp(event)">
@@ -60,8 +62,11 @@
                 <button type="button" onclick="downloadJSON(MYDATA, 'PathTool.txt', 'text/plain');">Save</button>
                 <button type="button" onclick="play(1);">Play1</button>
                 <button type="button" onclick="play(2);">Play2</button>
-                <br><input type="range" min="1" max="1000" value="500" class="slider" id="contourRange" onchange="Contour();">
+                <button type="button" onclick="animPrev();"><</button>
+                <button type="button" onclick="animNext();">></button>
+                <br><input type="range" min="2" max="500" value="50" class="slider" id="contourRange" oninput="Contour();">
                 <br><canvas id='viewCanvas' type="overflow:scroll;"></canvas>
+                <video id="video" src="data/BirdVideo.mp4" controls="false"></video>
               </div>
               <hr>
             <div id="saveBpl" style='background-color:rgba(200,200,200,0.5);'>

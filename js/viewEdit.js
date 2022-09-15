@@ -122,9 +122,15 @@ function buildViewImage(_time) {
 		return;
 
 	onptsel();
-	var thisView = getCurrentView();
-	var w = thisView.w;
-	var h = thisView.h;
+	var w = 0;
+	var h = 0;
+	if (VIDEO_DATA.active) {
+		w = video.videoWidth;
+		h = video.videoHeight;
+	} else {
+		w = workCanvas.width;
+		h = workCanvas.height;
+	}
 	var ratio = h/w;
 	var neededW = workCanvas.width * cameraZoom;
 	var neededH = workCanvas.height * cameraZoom;
@@ -152,9 +158,10 @@ function buildViewImage(_time) {
 	invtransfo.invertSelf();
 
 
+
 	switch (PLAY) {
 		case 0 : drawCurrentListPoints(); break;
-		case 1 : drawAnimPoints(false); break;
+		case 1 : if (VIDEO_DATA.video) drawAnimFrame(); else drawAnimPoints(false); break;
 		case 2 : drawAnimPoints(true); break;
 		default : break;
 	}
@@ -270,7 +277,7 @@ function drawAnimPoints(_parallel) {
 			let cr = thisPt.r;
 			for (var j = 0; j < interpCount; j++) {
 				if (keyIndex > PLAYFRAME)
-					break;
+				break;
 				drawPoint(cx * destW, cy* destH, cr);
 				keyIndex++;
 				cx += slopex;
@@ -284,6 +291,54 @@ function drawAnimPoints(_parallel) {
 		PLAYFRAME = 0;
 }
 
+
+
+function drawAnimFrame() {
+	viewContext.fillStyle = 'black';
+	viewContext.fillRect(0, 0, viewCanvas.width, viewCanvas.height);
+	viewContext.fillStyle = 'blue';
+
+	let keyIndex = 0;
+	let interpCount = Math.max(getElemInt10('interp'), 10);
+	MYDATA.interp = interpCount;
+	let prevx, prevy, prevr;
+	let canInterp = false;
+
+		if (MYDATA.lists.length === 0)
+			return;
+		VIDEO_DATA.curFrame %= MYDATA.lists.length;
+
+		const curList = MYDATA.lists[Math.floor(VIDEO_DATA.curFrame)];
+		getElem("mouseCoordLabel").innerHTML = curList.name;
+
+		for (var keyIt = 0; keyIt < curList.points.length; keyIt++) {
+			const thisPt = curList.points[keyIt];
+			let nextPt = thisPt;
+			if (keyIt < curList.points.length - 1)
+				nextPt = curList.points[keyIt + 1];
+			let slopex = 0;
+			let slopey = 0;
+			let sloper = 0;
+			if (interpCount > 0) {
+				slopex = (nextPt.x - thisPt.x) / interpCount;
+				slopey = (nextPt.y - thisPt.y) / interpCount;
+				sloper = (nextPt.r - thisPt.r) / interpCount;	
+			}
+			let cx = thisPt.x;
+			let cy = thisPt.y;
+			let cr = thisPt.r;
+			for (var j = 0; j < interpCount; j++) {
+				drawPoint(cx * destW, cy* destH, cr);
+				keyIndex++;
+				cx += slopex;
+				cy += slopey;
+				cr += sloper;
+			}
+		}
+
+		VIDEO_DATA.curFrame = (VIDEO_DATA.curFrame + 0.1) % VIDEO_DATA.processedFrames.length;
+		
+}
 
 
 // Gets the relevant location from a mouse or single touch event
@@ -389,4 +444,42 @@ function adjustZoom(zoomAmount, zoomFactor)
     }
 }
 
+
+function processOneVideoFrame() {
+	const frame = VIDEO_DATA.video.get();
+	const elm = getElem("video");
+	const w = video.videoWidth;
+	const h = video.videoHeight;
+
+	workCanvas.width = w;
+	workCanvas.height = h;
+	workContext.width = w;
+	workContext.height = h;
+	workContext.imageSmoothingEnabled = false;
+	workContext.drawImage(elm, 0, 0, w, h, 0, 0, w, h);
+	workImageData = workContext.getImageData(0, 0, w, h);
+	workImagePixels = workImageData.data;
+
+	viewCanvas.width = w;
+	viewCanvas.height = h;
+	viewContext.width = w;
+	viewContext.height = h;
+	viewContext.imageSmoothingEnabled = false;
+	viewContext.drawImage(elm, 0, 0, w, h, 0, 0, w, h);
+
+
+	if ((VIDEO_DATA.processedFrames.length <= VIDEO_DATA.curFrame) ||
+		(!VIDEO_DATA.processedFrames[VIDEO_DATA.curFrame])) {
+		Contour("frame #" + frame);
+		VIDEO_DATA.processedFrames[VIDEO_DATA.curFrame] = true;
+	}
+
+	if (elm.currentTime >= elm.duration) {
+		elm.currentTime = 0;
+		VIDEO_DATA.processed = true;
+		elm.width = 0;
+		elm.height = 0;
+		elm.style.visibility = "hidden";
+	}
+}
 
