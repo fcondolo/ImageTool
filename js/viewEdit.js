@@ -117,6 +117,50 @@ function showCards() {
 	}
 }
 
+
+function interpolate(x1, y1, r1, x2, y2, r2, scale) {
+	var ret = [];	
+	let dx = x2-x1;
+	let dy = y2-y1;
+	let dist = Math.sqrt(dx*dx+dy*dy);
+	if (dist <= 1) {
+		ret.push({x:x1,y:y1,r:r1});
+		return ret;
+	}
+	let steps = dist * MYDATA.interp;
+	let slopex = dx / steps;
+	let slopey = dy / steps;
+	let sloper = (r2 - r1) / steps;
+	let x = x1;
+	let y = y1;
+	let r = r1;
+	for (var i = 0; i < steps; i++) {
+		ret.push({x:x,y:y,r:r});	
+		x += slopex;
+		y += slopey;
+		r += sloper;
+	}
+	return ret;
+}
+
+function precalcInterp() {
+	let totalPoints = 0;
+	for (listIt = 0; listIt < MYDATA.lists.length; listIt++) {
+		const curList = MYDATA.lists[listIt].points;
+		for (var keyIt = 0; keyIt < curList.length; keyIt++) {
+			let thispt = curList[keyIt];
+			let nextpt = curList[Math.min(keyIt+1,curList.length-1)];
+			let coord = interpolate(
+				thispt.x * AMIGA_WIDTH, thispt.y * AMIGA_HEIGHT, thispt.r,
+				nextpt.x * AMIGA_WIDTH, nextpt.y * AMIGA_HEIGHT, nextpt.r
+				);
+			totalPoints += coord.length;
+			thispt.interp = coord;
+		}		
+	}
+	MYDATA.totalPoints = totalPoints;
+}
+
 function buildViewImage(_time) {
 	if (!viewCanvas)
 		return;
@@ -157,7 +201,8 @@ function buildViewImage(_time) {
 	invtransfo = viewContext.getTransform();
 	invtransfo.invertSelf();
 
-
+	MYDATA.interp = getElemInt10('interp');
+	precalcInterp();
 
 	switch (PLAY) {
 		case 0 : drawCurrentListPoints(); break;
@@ -209,34 +254,17 @@ function drawSprites(ofs) {
 }
 
 
+
 function drawCurrentListPoints() {
 	const index = getElem("alllists").selectedIndex;
 	if (index >= 0 && index < MYDATA.lists.length) {
 		const PATH_PTS = MYDATA.lists[index].points;
 
-		let interpCount = getElemInt10('interp');
-		MYDATA.interp = interpCount;
-		let prevx, prevy, prevr;
 		for (var i = 0; i < PATH_PTS.length; i++) {
-			let coord = {x:PATH_PTS[i].x * destW,y:PATH_PTS[i].y * destH};
-			var r = PATH_PTS[i].r;
-			drawPoint(coord.x, coord.y, r, (i === CUR_PT_INDEX));
-			if (i > 0) {
-				if (interpCount > 0) {
-					let slopex = (coord.x - prevx) / interpCount;
-					let slopey = (coord.y - prevy) / interpCount;
-					let sloper = (r - prevr) / interpCount;
-					for (var j = 0; j < interpCount; j++) {
-						prevx += slopex;
-						prevy += slopey;
-						prevr += sloper;
-						drawPoint(prevx, prevy, prevr);
-					}
-				}
+			const coord = PATH_PTS[i].interp;
+			for (let j = 0; j < coord.length; j++) {
+				drawPoint(coord[j].x * destW / AMIGA_WIDTH, coord[j].y * destH / AMIGA_HEIGHT, coord[j].r, (i === CUR_PT_INDEX)) && (j===0);
 			}
-			prevx = coord.x;
-			prevy = coord.y;
-			prevr = r;
 		}
 	}
 }
@@ -244,50 +272,27 @@ function drawCurrentListPoints() {
 
 function drawAnimPoints(_parallel) {
 	let keyIndex = 0;
-	let interpCount = getElemInt10('interp');
-	MYDATA.interp = interpCount;
 	let prevx, prevy, prevr;
 	let canInterp = false;
-
-	let totalPointsCount = 0;
-	for (var listIt = 0; listIt < MYDATA.lists.length; listIt++) {
-		const curList = MYDATA.lists[listIt];
-		totalPointsCount += curList.points.length;
-	}
-	const maxKeyIndex = totalPointsCount * interpCount;
-	for (var listIt = 0; listIt < MYDATA.lists.length; listIt++) {
-		const curList = MYDATA.lists[listIt];
+	let listIt = 0;
+	for (listIt = 0; listIt < MYDATA.lists.length; listIt++) {
+		const curList = MYDATA.lists[listIt].points;
 		if (_parallel)
 			keyIndex = 0;
-		for (var keyIt = 0; keyIt < curList.points.length; keyIt++) {
-			const thisPt = curList.points[keyIt];
-			let nextPt = thisPt;
-			if (keyIt < curList.points.length - 1)
-				nextPt = curList.points[keyIt + 1];
-			let slopex = 0;
-			let slopey = 0;
-			let sloper = 0;
-			if (interpCount > 0) {
-				slopex = (nextPt.x - thisPt.x) / interpCount;
-				slopey = (nextPt.y - thisPt.y) / interpCount;
-				sloper = (nextPt.r - thisPt.r) / interpCount;	
-			}
-			let cx = thisPt.x;
-			let cy = thisPt.y;
-			let cr = thisPt.r;
-			for (var j = 0; j < interpCount; j++) {
+
+
+		for (var keyIt = 0; keyIt < curList.length; keyIt++) {
+			let coord = curList[keyIt].interp;
+			for (let j = 0; j < coord.length; j++) {
 				if (keyIndex > PLAYFRAME)
-				break;
-				drawPoint(cx * destW, cy* destH, cr);
+					break;
+				drawPoint(coord[j].x * destW / AMIGA_WIDTH, coord[j].y * destH / AMIGA_HEIGHT, coord[j].r);
 				keyIndex++;
-				cx += slopex;
-				cy += slopey;
-				cr += sloper;
 			}
 		}				
 	}
 	PLAYFRAME++;
-	if (PLAYFRAME >= maxKeyIndex)
+	if (PLAYFRAME >= MYDATA.totalPoints)
 		PLAYFRAME = 0;
 }
 
