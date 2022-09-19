@@ -31,9 +31,24 @@ function genSpriteCtrlWords(x,y,h, attached) {
 	return {pos:pos, ctl:ctl};
 }
 
+function AmigaPixMsk(_x) {
+	const x = v(_x) & 7;
+	switch (x) {
+		case 0 : return 128;
+		case 1 : return 64;
+		case 2 : return 32;
+		case 3 : return 16;
+		case 4 : return 8;
+		case 5 : return 4;
+		case 6 : return 2;
+		case 7 : return 1;
+	}
+}
 
 function Export() {
 	const SPRITE_SIZE = 16;
+	const FAT_HEADER_BYTES = 4
+	const LIST_HEADER_BYTES = 4
 	var myData = "";
 	var FAT = "";
 
@@ -41,19 +56,30 @@ function Export() {
 	precalcInterp();
 
 	let listIt = 0;
-	FAT += "dc.w\t" + MYDATA.lists.length + "\t; total lists count\n"
-	FAT += "dc.w\t" + MYDATA.totalPoints + "\t; total points count\n"
-	let writeOfs = 4;
+	// WRITE FAT HEADER
+	FAT += "\tdc.w\t" + MYDATA.lists.length + "\t; total lists count\n"
+	FAT += "\tdc.w\t" + MYDATA.totalPoints + "\t; total points count\n"
+	let writeOfs = FAT_HEADER_BYTES + LIST_HEADER_BYTES * MYDATA.lists.length;
 	for (listIt = 0; listIt < MYDATA.lists.length; listIt++) {
 		const curList = MYDATA.lists[listIt].points;
-		FAT += "dc.w\t" + writeOfs + "\; list #" + listIt + " 1st pt offset in bytes\n";
-		FAT += "dc.w\t" + curList.totalPoints + "\; list #" + listIt + " pt count\n";
+		// WRITE LIST HEADER
+		FAT += "\tdc.w\t" + writeOfs + "\; list #" + listIt + " 1st pt offset in bytes\n";
+		FAT += "\tdc.w\t" + curList.totalPoints + "\; list #" + listIt + " pt count\n";
+		// WRITE LIST
 		for (var keyIt = 0; keyIt < curList.length; keyIt++) {
 			let coord = curList[keyIt].interp;
 			for (let j = 0; j < coord.length; j++) {
-				let spriteData = genSpriteCtrlWords(coord[j].x-SPRITE_SIZE/2, coord[j].y-SPRITE_SIZE/2, SPRITE_SIZE, false);
+			/*	let spriteData = genSpriteCtrlWords(coord[j].x-SPRITE_SIZE/2, coord[j].y-SPRITE_SIZE/2, SPRITE_SIZE, false);
 				myData += "dc.w\t" + spriteData.pos + ", " + spriteData.ctl  + "\n";
 				writeOfs += 4;
+				*/
+				let x = v(coord[j].x);
+				let y = v(coord[j].y);
+				let ofs = v(v(y * 40) + v(x / 8));
+				let msk = AmigaPixMsk(x);
+				myData += "\tdc.w\t" + ofs + "," + msk  + "\n";
+				writeOfs += 4;
+				coord[j].x
 			}
 		}				
 	}
