@@ -83,6 +83,7 @@ function Export() {
 			}
 		}				
 	}
+	myData += "\tdc.w\t0,0\t; terminating zeroes\n";
 	FAT += myData;
     var file = new Blob([FAT], {type: 'text/plain'});
     var a = document.createElement("a");
