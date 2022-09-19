@@ -73,17 +73,15 @@
                 <center><h3><i>Export</i></h3></center>
                 <label for="export_interp">Interpolation: </label>
                 <select name="export_interp" id="export_interp">
-                  <option value="1">None</option>
-                  <option value="2">Export slopes</option>
-                  <option value="3">Export all points</option>
+                  <option value="1">Export all points</option>
+                  <option value="2">None</option>
                 </select>
 
                 <label for="export_coord">Coordinates: </label>
                 <select name="export_coord" id="export_coord">
-                  <option value="1">16 bit coord</option>
-                  <option value="2">4 bit delta coord</option>
-                  <option value="2">16 bit ofs</option>
+                  <option value="1">Sprite coord</option>
                 </select>
+                <button type="button" onclick="Export();">Export</button>
               </div>
           <br><br>
           <div id = "mouseFollow" style = "display:none; position:fixed; z-index:10; background-color: #6B6B6B; color: white;">

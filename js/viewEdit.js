@@ -147,6 +147,7 @@ function precalcInterp() {
 	let totalPoints = 0;
 	for (listIt = 0; listIt < MYDATA.lists.length; listIt++) {
 		const curList = MYDATA.lists[listIt].points;
+		let lstTotalPts = 0;
 		for (var keyIt = 0; keyIt < curList.length; keyIt++) {
 			let thispt = curList[keyIt];
 			let nextpt = curList[Math.min(keyIt+1,curList.length-1)];
@@ -155,8 +156,10 @@ function precalcInterp() {
 				nextpt.x * AMIGA_WIDTH, nextpt.y * AMIGA_HEIGHT, nextpt.r
 				);
 			totalPoints += coord.length;
+			lstTotalPts += coord.length;
 			thispt.interp = coord;
-		}		
+		}
+		curList.totalPoints = lstTotalPts;
 	}
 	MYDATA.totalPoints = totalPoints;
 }

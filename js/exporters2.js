@@ -1,6 +1,8 @@
 function genSpriteCtrlWords(x,y,h, attached) {
-	var HSTART = v(x + getElemInt10('sprtOfsX'));
-	var VSTART = v(y + getElemInt10('sprtOfsY'));
+	const sprtOfsX = 128; // getElemInt10('sprtOfsX')
+	const sprtOfsY = 44; // getElemInt10('sprtOfsY')
+	var HSTART = v(x + sprtOfsX);
+	var VSTART = v(y + sprtOfsY);
 	var VSTOP  = v(VSTART + h);
 
 	// SPRxPOS:
@@ -29,6 +31,39 @@ function genSpriteCtrlWords(x,y,h, attached) {
 	return {pos:pos, ctl:ctl};
 }
 
+
+function Export() {
+	const SPRITE_SIZE = 16;
+	var myData = "";
+	var FAT = "";
+
+	MYDATA.interp = getElemInt10('interp');
+	precalcInterp();
+
+	let listIt = 0;
+	FAT += "dc.w\t" + MYDATA.lists.length + "\t; total lists count\n"
+	FAT += "dc.w\t" + MYDATA.totalPoints + "\t; total points count\n"
+	let writeOfs = 4;
+	for (listIt = 0; listIt < MYDATA.lists.length; listIt++) {
+		const curList = MYDATA.lists[listIt].points;
+		FAT += "dc.w\t" + writeOfs + "\; list #" + listIt + " 1st pt offset in bytes\n";
+		FAT += "dc.w\t" + curList.totalPoints + "\; list #" + listIt + " pt count\n";
+		for (var keyIt = 0; keyIt < curList.length; keyIt++) {
+			let coord = curList[keyIt].interp;
+			for (let j = 0; j < coord.length; j++) {
+				let spriteData = genSpriteCtrlWords(coord[j].x-SPRITE_SIZE/2, coord[j].y-SPRITE_SIZE/2, SPRITE_SIZE, false);
+				myData += "dc.w\t" + spriteData.pos + ", " + spriteData.ctl  + "\n";
+				writeOfs += 4;
+			}
+		}				
+	}
+	FAT += myData;
+    var file = new Blob([FAT], {type: 'text/plain'});
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(file);
+    a.download = 'path.asm';
+    a.click();
+}
 
 function downloadJSON(content, fileName, contentType) {
 	let interpCount = getElemInt10('interp');
