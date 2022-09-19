@@ -1138,8 +1138,6 @@ function onMouseClick(e) {
 		//	return;
 		}
 
-		pushundoredo();
-
 		var m = getViewPos(e);
 		let coord = invtransfo.transformPoint(new DOMPoint(m.x, m.y));
 		if (MYDATA.lists.length === 0) {
@@ -1155,6 +1153,7 @@ function onMouseClick(e) {
 			r: getElemInt10('bobsize'),
 			interp: []
 		});
+		pushundoredo();
 		refreshPointsList();
 	}
 }
@@ -1582,10 +1581,9 @@ function Contour(_name) {
 
 	if (!_name || (_name.length === 0))
 		_name = "generated";
-	
-	pushundoredo();
-	
+		
 	MYDATA.lists.push({name: _name, points:pts});
+	pushundoredo();
 	refreshLists();
 }
 
@@ -1602,8 +1600,8 @@ function readSVGFile(e) {
 			var parser = new DOMParser();
 			//var doc = parser.parseFromString(e.target.result, "image/svg+xml");
 			let out = getPoints(e.target.result);
-			pushundoredo();
 			MYDATA.lists.push({name: "loaded SVG", points:[]});
+			pushundoredo();
 			for (var i = 0; i < out.length; i++) {
 				const pt = out[i];
 			}
@@ -1809,7 +1807,6 @@ function addNewList(_name) {
 	if (_name.length < 1)
 		_name = "default";
 
-	pushundoredo();
 	let index = getElem("alllists").selectedIndex;
 	if (index < 0) {
 		MYDATA.lists.push({name: _name, points:[]});
@@ -1818,18 +1815,19 @@ function addNewList(_name) {
 	else
 		MYDATA.lists.splice(index+1, 0, {name: _name, points:[]});
 
+	pushundoredo();
 	refreshLists(index+1);
 }
 
 function deleteList() {
 	let index = getElem("alllists").selectedIndex;
 	if (index < 0) {alert("please select the list to be deleted"); return;}
-	pushundoredo();
 	MYDATA.lists.splice(index, 1);
 	if (index >= MYDATA.lists.length)
 		index = MYDATA.lists.length-1;
 	if (index < 0)
 		index = 0;
+	pushundoredo();
 	refreshLists(index);
 }
 
@@ -1873,13 +1871,13 @@ function moveCurPt(_dx, _dy) {
 	if (CUR_PT_INDEX >= 0) {
 		const index = getElem("alllists").selectedIndex;
 		if (index >= 0 && index < MYDATA.lists.length) {
-			pushundoredo();
 			let PATH_PTS = MYDATA.lists[index].points;
 			let coord = {x:PATH_PTS[CUR_PT_INDEX].x * workCanvas.width, y:PATH_PTS[CUR_PT_INDEX].y * workCanvas.height};
 			coord.x += _dx;
 			coord.y += _dy;
 			PATH_PTS[CUR_PT_INDEX].x = coord.x / workCanvas.width;
 			PATH_PTS[CUR_PT_INDEX].y = coord.y / workCanvas.height;
+			pushundoredo();
 		}	
 	}
 }
@@ -1888,9 +1886,9 @@ function delCurPt(){
 	if (CUR_PT_INDEX >= 0) {
 		const index = getElem("alllists").selectedIndex;
 		if (index >= 0 && index < MYDATA.lists.length) {
-			pushundoredo();
 			let PATH_PTS = MYDATA.lists[index].points;
 			PATH_PTS.splice(CUR_PT_INDEX, 1);
+			pushundoredo();
 			refreshPointsList();
 		}	
 	}
