@@ -34,14 +34,14 @@ function genSpriteCtrlWords(x,y,h, attached) {
 function AmigaPixMsk(_x) {
 	const x = v(_x) & 7;
 	switch (x) {
-		case 0 : return 128;
-		case 1 : return 64;
-		case 2 : return 32;
-		case 3 : return 16;
-		case 4 : return 8;
-		case 5 : return 4;
-		case 6 : return 2;
-		case 7 : return 1;
+		case 0 : return 128|64|32;
+		case 1 : return 128|64|32;
+		case 2 : return 64|32|16;
+		case 3 : return 32|16|8;
+		case 4 : return 16|8|4;
+		case 5 : return 8|4|2;
+		case 6 : return 4|2|1;
+		case 7 : return 4|2|1;
 	}
 }
 

@@ -118,11 +118,13 @@ function showCards() {
 }
 
 
-function interpolate(x1, y1, r1, x2, y2, r2, scale) {
+function interpolate(x1, y1, r1, x2, y2, r2) {
 	var ret = [];	
 	let dx = x2-x1;
 	let dy = y2-y1;
-	let dist = Math.sqrt(dx*dx+dy*dy);
+	// let dist = Math.sqrt(dx*dx+dy*dy);
+	// we want manhattan dist as every changing pix must give a value
+	let dist = Math.max(Math.abs(dx),Math.abs(dy));
 	if (dist <= 1) {
 		ret.push({x:x1,y:y1,r:r1});
 		return ret;
