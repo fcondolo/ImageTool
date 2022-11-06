@@ -441,6 +441,8 @@ function onDrop(_fname) {
 	//document.getElementById('file-input').value = export_fileName;
 	var w = sourceImage.width;
 	var h = sourceImage.height
+	AMIGA_WIDTH = w;
+	AMIGA_HEIGHT = h;
 	writeCropValues(0,0,w,h);
 
 	sourceCanvas = document.getElementById("sourceCanvas");

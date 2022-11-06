@@ -62,6 +62,10 @@ function Export() {
 	FAT += "\tdc.w\t" + MYDATA.totalPoints + "\t; total points count\n"
 	let writeOfs = FAT_HEADER_BYTES + LIST_HEADER_BYTES * MYDATA.lists.length;
 	let duplicatesCount = 0;
+	let minX = 100000;
+	let maxX = -100000;
+	let minY = 100000;
+	let maxY = -100000;
 	for (listIt = 0; listIt < MYDATA.lists.length; listIt++) {
 		const curList = MYDATA.lists[listIt].points;
 		// WRITE LIST HEADER
@@ -79,6 +83,10 @@ function Export() {
 				*/
 				let x = v(coord[j].x);
 				let y = v(coord[j].y);
+				if (x < minX) minX = x;
+				if (y < minY) minY = y;
+				if (x > maxX) maxX = x;
+				if (y > maxY) maxY = y;
 				let ofs = v(v(y * width_bytes) + v(x / 8));
 				let msk = AmigaPixMsk(x);
 				if ((ofs == lastOfs) && (lastMsk == msk)) {
@@ -99,9 +107,11 @@ function Export() {
     a.href = URL.createObjectURL(file);
     a.download = 'path.asm';
     a.click();
-	if (duplicatesCount>0) {
-		alert("There are " + duplicatesCount + " duplicate contiguous points. This is bad, please save the data and warn Soundy");
+	let msg = "Export Done. MinX:" + minX +  ". MaxX:" + maxX + ". MinY:" + minY + ". MaxY:" + maxY + ".";
+	if (duplicatesCount>0) {		
+		msg += "There are " + duplicatesCount + " duplicate contiguous points.";
 	}
+	alert(msg);
 }
 
 function downloadJSON(content, fileName, contentType) {
