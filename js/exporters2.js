@@ -56,6 +56,7 @@ function Export() {
 	precalcInterp();
 
 	let listIt = 0;
+	const width_bytes = Math.floor(sourceImage.width/ 8);
 	// WRITE FAT HEADER
 	FAT += "\tdc.w\t" + MYDATA.lists.length + "\t; total lists count\n"
 	FAT += "\tdc.w\t" + MYDATA.totalPoints + "\t; total points count\n"
@@ -75,7 +76,7 @@ function Export() {
 				*/
 				let x = v(coord[j].x);
 				let y = v(coord[j].y);
-				let ofs = v(v(y * 40) + v(x / 8));
+				let ofs = v(v(y * width_bytes) + v(x / 8));
 				let msk = AmigaPixMsk(x);
 				myData += "\tdc.w\t" + ofs + "," + msk  + "\n";
 				writeOfs += 4;
