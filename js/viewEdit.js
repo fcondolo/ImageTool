@@ -136,8 +136,13 @@ function interpolate(x1, y1, r1, x2, y2, r2) {
 	let x = x1;
 	let y = y1;
 	let r = r1;
+	let lastofs = -100000;
 	for (var i = 0; i < steps; i++) {
-		ret.push({x:x,y:y,r:r});	
+		let thisofs = v(v(y * 40) + v(x / 8));
+		if (thisofs != lastofs) {
+			ret.push({x:x,y:y,r:r});	
+			thisofs = lastofs;
+		}
 		x += slopex;
 		y += slopey;
 		r += sloper;
