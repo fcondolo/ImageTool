@@ -140,11 +140,11 @@ function interpolate(x1, y1, r1, x2, y2, r2) {
 	let y = y1;
 	let r = r1;
 	for (var i = 0; i < steps; i++) {
-		let ix = v(x);
-		let iy = v(y);
-		let ir = v(r);
-		if ((interp_lastX != ix) && (interp_lastY != iy)) {
-			ret.push({x:ix,y:iy,r:ir});	
+		const ix = v(x);
+		const iy = v(y);
+		const ir = v(r);
+		if ((interp_lastX != ix) || (interp_lastY != iy)) {
+			ret.push({x:x,y:y,r:r});	
 			interp_lastX = ix;
 			interp_lastY = iy;
 		}
