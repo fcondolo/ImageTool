@@ -61,12 +61,15 @@ function Export() {
 	FAT += "\tdc.w\t" + MYDATA.lists.length + "\t; total lists count\n"
 	FAT += "\tdc.w\t" + MYDATA.totalPoints + "\t; total points count\n"
 	let writeOfs = FAT_HEADER_BYTES + LIST_HEADER_BYTES * MYDATA.lists.length;
+	let duplicatesCount = 0;
 	for (listIt = 0; listIt < MYDATA.lists.length; listIt++) {
 		const curList = MYDATA.lists[listIt].points;
 		// WRITE LIST HEADER
 		FAT += "\tdc.w\t" + writeOfs + "\; list #" + listIt + " 1st pt offset in bytes\n";
 		FAT += "\tdc.w\t" + curList.totalPoints + "\; list #" + listIt + " pt count\n";
 		// WRITE LIST
+		let lastMsk = 0;
+		let lastOfs = -100000;
 		for (var keyIt = 0; keyIt < curList.length; keyIt++) {
 			let coord = curList[keyIt].interp;
 			for (let j = 0; j < coord.length; j++) {
@@ -78,7 +81,12 @@ function Export() {
 				let y = v(coord[j].y);
 				let ofs = v(v(y * width_bytes) + v(x / 8));
 				let msk = AmigaPixMsk(x);
+				if ((ofs == lastOfs) && (lastMsk == msk)) {
+					duplicatesCount++;
+				}
 				myData += "\tdc.w\t" + ofs + "," + msk  + "\n";
+				lastOfs = ofs;
+				lastMsk = msk;
 				writeOfs += 4;
 				coord[j].x
 			}
@@ -91,6 +99,9 @@ function Export() {
     a.href = URL.createObjectURL(file);
     a.download = 'path.asm';
     a.click();
+	if (duplicatesCount>0) {
+		alert("There are " + duplicatesCount + " duplicate contiguous points. This is bad, please save the data and warn Soundy");
+	}
 }
 
 function downloadJSON(content, fileName, contentType) {

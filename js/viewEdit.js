@@ -19,6 +19,9 @@ MIN_ZOOM = 0.1
 SCROLL_SENSITIVITY = 0.0005
 
 var sprtCoord = [];
+var interp_lastX = -100000;
+var interp_lastY = -100000;
+
 const prtcle_count = 32;
 const prtcle_rad = 4;
 const prtcle_frames_count = 16;
@@ -136,12 +139,14 @@ function interpolate(x1, y1, r1, x2, y2, r2) {
 	let x = x1;
 	let y = y1;
 	let r = r1;
-	let lastofs = -100000;
 	for (var i = 0; i < steps; i++) {
-		let thisofs = v(v(y * 40) + v(x / 8));
-		if (thisofs != lastofs) {
-			ret.push({x:x,y:y,r:r});	
-			thisofs = lastofs;
+		let ix = v(x);
+		let iy = v(y);
+		let ir = v(r);
+		if ((interp_lastX != ix) && (interp_lastY != iy)) {
+			ret.push({x:ix,y:iy,r:ir});	
+			interp_lastX = ix;
+			interp_lastY = iy;
 		}
 		x += slopex;
 		y += slopey;
@@ -152,6 +157,8 @@ function interpolate(x1, y1, r1, x2, y2, r2) {
 
 function precalcInterp() {
 	let totalPoints = 0;
+	interp_lastX = -100000;
+	interp_lastY = -100000;
 	for (listIt = 0; listIt < MYDATA.lists.length; listIt++) {
 		const curList = MYDATA.lists[listIt].points;
 		let lstTotalPts = 0;

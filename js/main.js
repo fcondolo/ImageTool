@@ -229,8 +229,6 @@ function setElemChecked(_id,_value) {
 }
 
 function onLoad() {
-	interpolate(0, 0, 1, 2, 0, 1);
-
 	const params = getParameters();
 	const anim = params.get('anim');
 	if (anim && anim.length > 0) {
