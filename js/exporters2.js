@@ -31,7 +31,7 @@ function genSpriteCtrlWords(x,y,h, attached) {
 	return {pos:pos, ctl:ctl};
 }
 
-function AmigaPixMsk(_x) {
+function AmigaPixRichMsk(_x) {
 	const x = v(_x) & 7;
 	switch (x) {
 		case 0 : return 128|64|32;
@@ -42,6 +42,20 @@ function AmigaPixMsk(_x) {
 		case 5 : return 8|4|2;
 		case 6 : return 4|2|1;
 		case 7 : return 4|2|1;
+	}
+}
+
+function AmigaPixMsk(_x) {
+	const x = v(_x) & 7;
+	switch (x) {
+		case 0 : return 128;
+		case 1 : return 64;
+		case 2 : return 32;
+		case 3 : return 16;
+		case 4 : return 8;
+		case 5 : return 4;
+		case 6 : return 2;
+		case 7 : return 1;
 	}
 }
 
@@ -89,7 +103,7 @@ function Export() {
 				if (x > maxX) maxX = x;
 				if (y > maxY) maxY = y;
 				let ofs = v(v(y * width_bytes) + v(x / 8));
-				let msk = AmigaPixMsk(x);
+				let msk = ((v(AmigaPixMsk(x)) & 255) <<8) | (v(AmigaPixRichMsk(x))&255);
 				if ((ofs == lastOfs) && (lastMsk == msk)) {
 					duplicatesCount++;
 				} else {
