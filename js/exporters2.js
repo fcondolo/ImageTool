@@ -95,11 +95,10 @@ function Export() {
 				} else {
 					finalOutput.push("\tdc.w\t" + ofs + "," + msk  + "\n");
 					thisListTotalPoints++;
+					writeOfs += 4;
 				}
 				lastOfs = ofs;
 				lastMsk = msk;
-				writeOfs += 4;
-				coord[j].x
 			}
 		}				
 		FAT += "\tdc.w\t" + thisListTotalPoints + "\; list #" + listIt + " pt count\n";
