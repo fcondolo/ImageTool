@@ -51,6 +51,7 @@ function Export() {
 	const LIST_HEADER_BYTES = 4
 	var myData = "";
 	var FAT = "";
+	var PREFAT = "";
 
 	MYDATA.interp = getElemInt10('interp');
 	precalcInterp();
@@ -58,8 +59,7 @@ function Export() {
 	let listIt = 0;
 	const width_bytes = Math.floor(sourceImage.width/ 8);
 	// WRITE FAT HEADER
-	FAT += "\tdc.w\t" + MYDATA.lists.length + "\t; total lists count\n"
-	FAT += "\tdc.w\t" + MYDATA.totalPoints + "\t; total points count\n"
+	PREFAT += "\tdc.w\t" + MYDATA.lists.length + "\t; total lists count\n"
 	let writeOfs = FAT_HEADER_BYTES + LIST_HEADER_BYTES * MYDATA.lists.length;
 	let duplicatesCount = 0;
 	let minX = 100000;
@@ -107,8 +107,10 @@ function Export() {
 		myData += finalOutput[wout];
 	}
 	myData += "\tdc.w\t0,0\t; terminating zeroes\n";
-	FAT += myData;
-    var file = new Blob([FAT], {type: 'text/plain'});
+	PREFAT += "\tdc.w\t" + finalOutput.length + "\t; total points count\n"
+	PREFAT += FAT;
+	PREFAT += myData;
+    var file = new Blob([PREFAT], {type: 'text/plain'});
     var a = document.createElement("a");
     a.href = URL.createObjectURL(file);
     a.download = 'path.asm';
