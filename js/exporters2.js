@@ -66,14 +66,15 @@ function Export() {
 	let maxX = -100000;
 	let minY = 100000;
 	let maxY = -100000;
+	finalOutput = [];
 	for (listIt = 0; listIt < MYDATA.lists.length; listIt++) {
 		const curList = MYDATA.lists[listIt].points;
 		// WRITE LIST HEADER
 		FAT += "\tdc.w\t" + writeOfs + "\; list #" + listIt + " 1st pt offset in bytes\n";
-		FAT += "\tdc.w\t" + curList.totalPoints + "\; list #" + listIt + " pt count\n";
 		// WRITE LIST
 		let lastMsk = 0;
 		let lastOfs = -100000;
+		let thisListTotalPoints = 0;
 		for (var keyIt = 0; keyIt < curList.length; keyIt++) {
 			let coord = curList[keyIt].interp;
 			for (let j = 0; j < coord.length; j++) {
@@ -91,14 +92,20 @@ function Export() {
 				let msk = AmigaPixMsk(x);
 				if ((ofs == lastOfs) && (lastMsk == msk)) {
 					duplicatesCount++;
+				} else {
+					finalOutput.push("\tdc.w\t" + ofs + "," + msk  + "\n");
+					thisListTotalPoints++;
 				}
-				myData += "\tdc.w\t" + ofs + "," + msk  + "\n";
 				lastOfs = ofs;
 				lastMsk = msk;
 				writeOfs += 4;
 				coord[j].x
 			}
 		}				
+		FAT += "\tdc.w\t" + thisListTotalPoints + "\; list #" + listIt + " pt count\n";
+	}
+	for (let wout = 0; wout < finalOutput.length; wout++) {
+		myData += finalOutput[wout];
 	}
 	myData += "\tdc.w\t0,0\t; terminating zeroes\n";
 	FAT += myData;
@@ -107,9 +114,10 @@ function Export() {
     a.href = URL.createObjectURL(file);
     a.download = 'path.asm';
     a.click();
-	let msg = "Export Done. MinX:" + minX +  ". MaxX:" + maxX + ". MinY:" + minY + ". MaxY:" + maxY + ".";
-	if (duplicatesCount>0) {		
-		msg += "There are " + duplicatesCount + " duplicate contiguous points.";
+	let msg = "Export Done. Lists count:" + MYDATA.lists.length + ". Points count: " +  finalOutput.length + " (removed " + (MYDATA.totalPoints-finalOutput.length) + " duplicates)." + " MinX:" + minX +  ". MaxX:" + maxX + ". MinY:" + minY + ". MaxY:" + maxY + ".";
+	if (duplicatesCount>0) {
+		if (duplicatesCount != (MYDATA.totalPoints-finalOutput.length))
+			msg += "There are still duplicates.";
 	}
 	alert(msg);
 }
