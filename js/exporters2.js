@@ -104,10 +104,14 @@ function Export() {
 				if (y > maxY) maxY = y;
 				let ofs = v(v(y * width_bytes) + v(x / 8));
 				let msk = ((v(AmigaPixMsk(x)) & 255) <<8) | (v(AmigaPixRichMsk(x))&255);
+				let shiftedY = v(y) << 6;
 				if ((ofs == lastOfs) && (lastMsk == msk)) {
 					duplicatesCount++;
 				} else {
-					finalOutput.push("\tdc.w\t" + ofs + "," + msk  + "\n");
+					if (STORE_OFFSET)
+						finalOutput.push("\tdc.w\t" + ofs + "," + msk  + "\n");
+					else
+						finalOutput.push("\tdc.w\t" + shiftedY + "," + msk  + "\n");
 					thisListTotalPoints++;
 					writeOfs += 4;
 				}
@@ -123,6 +127,10 @@ function Export() {
 	myData += "\tdc.w\t0,0\t; terminating zeroes\n";
 	PREFAT += "\tdc.w\t" + finalOutput.length + "\t; total points count\n"
 	PREFAT += FAT;
+	if (STORE_OFFSET)
+		PREFAT += "\t// DATA FORMAT: screenOfs, mask\n";
+	else
+		PREFAT += "\t// DATA FORMAT: y<<6, mask\n";
 	PREFAT += myData;
     var file = new Blob([PREFAT], {type: 'text/plain'});
     var a = document.createElement("a");

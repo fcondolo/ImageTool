@@ -22,6 +22,7 @@ var MYDATA = {
 
 var AMIGA_WIDTH = 320;
 var AMIGA_HEIGHT = 180;
+var STORE_OFFSET = false;
 var CUR_PT_INDEX = -1;
 var UNDOREDO = [];
 var UNDOREDO_INDEX = 0;
