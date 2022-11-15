@@ -111,7 +111,7 @@ function Export() {
 					if (STORE_OFFSET)
 						finalOutput.push("\tdc.w\t" + ofs + "," + msk  + "\n");
 					else
-						finalOutput.push("\tdc.w\t" + shiftedY + "," + msk  + "\n");
+						finalOutput.push("\tdc.w\t" + shiftedY + "," + msk  + "," + v(x / 8) + "\n");
 					thisListTotalPoints++;
 					writeOfs += 4;
 				}
@@ -128,9 +128,9 @@ function Export() {
 	PREFAT += "\tdc.w\t" + finalOutput.length + "\t; total points count\n"
 	PREFAT += FAT;
 	if (STORE_OFFSET)
-		PREFAT += "\t// DATA FORMAT: screenOfs, mask\n";
+		PREFAT += "\t; DATA FORMAT: screenOfs, mask\n";
 	else
-		PREFAT += "\t// DATA FORMAT: y<<6, mask\n";
+		PREFAT += "\t; DATA FORMAT: y<<6, mask, x/8\n";
 	PREFAT += myData;
     var file = new Blob([PREFAT], {type: 'text/plain'});
     var a = document.createElement("a");
