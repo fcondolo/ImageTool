@@ -84,6 +84,7 @@ function Export() {
 				for (let j = 1; j < mergeMe.length; j++) {
 					MYDATA.lists[mergeIndex].points = MYDATA.lists[mergeIndex].points.concat(mergeMe[j].slice());
 				}
+				MYDATA.lists[mergeIndex].points = MYDATA.lists[mergeIndex].points.concat(saveLists[i].points.slice());
 				mergeMe = [];
 			} else {
 				MYDATA.lists.push(saveLists[i]);
