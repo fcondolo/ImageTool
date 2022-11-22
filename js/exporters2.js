@@ -69,6 +69,27 @@ function Export() {
 
 	MYDATA.interp = getElemInt10('interp');
 	precalcInterp();
+	
+	// merge linked lists
+	const saveLists = MYDATA.lists.slice();
+	MYDATA.lists = [];
+	let mergeMe = [];
+	for (let i = 0; i < saveLists.length; i++) {
+		if (saveLists[i].linked) {
+			mergeMe.push(saveLists[i].points.slice()); 
+		} else {
+			if (mergeMe.length > 0) {
+				MYDATA.lists.push({name: "d", points:mergeMe[0].slice(), linked:false});
+				const mergeIndex = MYDATA.lists.length-1;
+				for (let j = 1; j < mergeMe.length; j++) {
+					MYDATA.lists[mergeIndex].points = MYDATA.lists[mergeIndex].points.concat(mergeMe[j].slice());
+				}
+				mergeMe = [];
+			} else {
+				MYDATA.lists.push(saveLists[i]);
+			}
+		}
+	}
 
 	let listIt = 0;
 	const width_bytes = Math.floor(sourceImage.width/ 8);
@@ -143,6 +164,9 @@ function Export() {
 			msg += "There are still duplicates.";
 	}
 	alert(msg);
+
+	// restore original lists
+	MYDATA.lists = saveLists.slice();	
 }
 
 function downloadJSON(content, fileName, contentType) {

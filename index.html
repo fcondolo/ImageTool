@@ -42,9 +42,10 @@
                 <input type="text" id="listname" name="listname">
                 <button type="button" onclick="addNewList(null);">Add List</button>
                 <button type="button" onclick="deleteList();">Del List</button>
+                <input type="checkbox" onclick="linkList();" id="isLinked">Link List</button>
                 <br>
                 <label for="alllists">Current list:</label>
-              <select name="alllists" id="alllists" onchange="refreshPointsList();">
+              <select name="alllists" id="alllists" onchange="refreshCurrentList();">
               </select>
               <br>
                 <select name="ptslist" id="ptslist" size="0" onselect="onptsel();">  

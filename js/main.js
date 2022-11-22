@@ -22,7 +22,7 @@ var MYDATA = {
 
 var AMIGA_WIDTH = 320;
 var AMIGA_HEIGHT = 180;
-var STORE_OFFSET = false;
+var STORE_OFFSET = true;
 var CUR_PT_INDEX = -1;
 var UNDOREDO = [];
 var UNDOREDO_INDEX = 0;
@@ -1154,10 +1154,11 @@ function onMouseClick(e) {
 			x : (coord.x) / viewCanvas.width,
 			y : (coord.y) / viewCanvas.height,
 			r: getElemInt10('bobsize'),
+			linked: false,
 			interp: []
 		});
 		pushundoredo();
-		refreshPointsList();
+		refreshCurrentListt();
 	}
 }
 
@@ -1585,7 +1586,7 @@ function Contour(_name) {
 	if (!_name || (_name.length === 0))
 		_name = "generated";
 		
-	MYDATA.lists.push({name: _name, points:pts});
+	MYDATA.lists.push({name: _name, points:pts, linked:false});
 	pushundoredo();
 	refreshLists();
 }
@@ -1603,7 +1604,7 @@ function readSVGFile(e) {
 			var parser = new DOMParser();
 			//var doc = parser.parseFromString(e.target.result, "image/svg+xml");
 			let out = getPoints(e.target.result);
-			MYDATA.lists.push({name: "loaded SVG", points:[]});
+			MYDATA.lists.push({name: "loaded SVG", points:[], linked: false});
 			pushundoredo();
 			for (var i = 0; i < out.length; i++) {
 				const pt = out[i];
@@ -1773,11 +1774,11 @@ function refreshLists(_index) {
 		elm.selectedIndex = MYDATA.lists.length-1;
 	else
 		elm.selectedIndex = _index;
-	refreshPointsList();
+	refreshCurrentList();
 }
 
 
-function refreshPointsList() {
+function refreshCurrentList() {
 	const elm = getElem("ptslist");
 	if (MYDATA.lists.length === 0) {
 		elm.innerHTML = "";
@@ -1792,6 +1793,7 @@ function refreshPointsList() {
 		index = MYDATA.lists.length-1;
 		getElem("alllists").selectedIndex = index;
 	}
+	getElem("isLinked").checked = MYDATA.lists[index].linked;
 	const lst = MYDATA.lists[index].points;
 	elm.size = Math.min(20,lst.length);
 	let content = "";
@@ -1804,15 +1806,21 @@ function refreshPointsList() {
 	onptsel();
 }
 
-function addNewList(_name) {
+function addNewList(_name, _points, _linked) {
 	if (_name === null)
 		_name = getElemValue("listname");
 	if (_name.length < 1)
 		_name = "default";
+	
+	if (_points === null)
+		_points = [];
 
-	let index = getElem("alllists").selectedIndex;
+	if (_linked === null)
+		_linked = false;
+
+		let index = getElem("alllists").selectedIndex;
 	if (index < 0) {
-		MYDATA.lists.push({name: _name, points:[]});
+		MYDATA.lists.push({name: _name, points:_points, linked:_linked});
 		index = -1;
 	}
 	else
@@ -1830,6 +1838,16 @@ function deleteList() {
 		index = MYDATA.lists.length-1;
 	if (index < 0)
 		index = 0;
+	pushundoredo();
+	refreshLists(index);
+}
+
+
+
+function linkList() {
+	let index = getElem("alllists").selectedIndex;
+	if (index < 0) {alert("please select the list to be linked"); return;}
+	MYDATA.lists[index].linked = true;
 	pushundoredo();
 	refreshLists(index);
 }
@@ -1892,7 +1910,7 @@ function delCurPt(){
 			let PATH_PTS = MYDATA.lists[index].points;
 			PATH_PTS.splice(CUR_PT_INDEX, 1);
 			pushundoredo();
-			refreshPointsList();
+			refreshCurrentList();
 		}	
 	}
 }
