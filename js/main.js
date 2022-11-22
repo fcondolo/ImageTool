@@ -1847,7 +1847,7 @@ function deleteList() {
 function linkList() {
 	let index = getElem("alllists").selectedIndex;
 	if (index < 0) {alert("please select the list to be linked"); return;}
-	MYDATA.lists[index].linked = true;
+	MYDATA.lists[index].linked = isElemChecked("isLinked");
 	pushundoredo();
 	refreshLists(index);
 }
