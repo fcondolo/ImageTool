@@ -126,12 +126,13 @@ function Export() {
 				if (y > maxY) maxY = y;
 				let ofs = v(v(y * width_bytes) + v(x / 8));
 				let msk = ((v(AmigaPixMsk(x)) & 255) <<8) | (v(AmigaPixRichMsk(x))&255);
+				let sprt = genSpriteCtrlWords(x-8, y-8, 16, false);
 				let shiftedY = v(y) << 6;
 				if ((ofs == lastOfs) && (lastMsk == msk)) {
 					duplicatesCount++;
 				} else {
 					if (STORE_OFFSET)
-						finalOutput.push("\tdc.w\t" + ofs + "," + msk  + "\n");
+						finalOutput.push("\tdc.w\t" + ofs + "," + msk  + "," + v(sprt.pos) + "," + v(sprt.ctl) + "\n");
 					else
 						finalOutput.push("\tdc.w\t" + shiftedY + "," + msk  + "," + v(x / 8) + "\n");
 					thisListTotalPoints++;
@@ -150,7 +151,7 @@ function Export() {
 	PREFAT += "\tdc.w\t" + finalOutput.length + "\t; total points count\n"
 	PREFAT += FAT;
 	if (STORE_OFFSET)
-		PREFAT += "\t; DATA FORMAT: screenOfs, mask\n";
+		PREFAT += "\t; DATA FORMAT: screenOfs, mask, sprt\n";
 	else
 		PREFAT += "\t; DATA FORMAT: y<<6, mask, x/8\n";
 	PREFAT += myData;
