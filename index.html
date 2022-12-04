@@ -72,16 +72,8 @@
               <hr>
             <div id="saveBpl" style='background-color:rgba(200,200,200,0.5);'>
                 <center><h3><i>Export</i></h3></center>
-                <label for="export_interp">Interpolation: </label>
-                <select name="export_interp" id="export_interp">
-                  <option value="1">Export all points</option>
-                  <option value="2">None</option>
-                </select>
-
-                <label for="export_coord">Coordinates: </label>
-                <select name="export_coord" id="export_coord">
-                  <option value="1">Sprite coord</option>
-                </select>
+                xofs: <input type="text" id="xofs" name="xofs" value="64">
+                yofs: <input type="text" id="yofs" name="yofs" value="90">
                 <button type="button" onclick="Export();">Export</button>
               </div>
           <br><br>

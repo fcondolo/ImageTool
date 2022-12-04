@@ -124,9 +124,11 @@ function Export() {
 				if (y < minY) minY = y;
 				if (x > maxX) maxX = x;
 				if (y > maxY) maxY = y;
+				let xofs = getElemInt10("xofs");
+				let yofs = getElemInt10("yofs");
 				let ofs = v(v(y * width_bytes) + v(x / 8));
 				let msk = ((v(AmigaPixMsk(x)) & 255) <<8) | (v(AmigaPixRichMsk(x))&255);
-				let sprt = genSpriteCtrlWords(x-8, y-8, 16, false);
+				let sprt = genSpriteCtrlWords(x-8+xofs, y-8+yofs, 16, false);
 				let shiftedY = v(y) << 6;
 				if ((ofs == lastOfs) && (lastMsk == msk)) {
 					duplicatesCount++;
