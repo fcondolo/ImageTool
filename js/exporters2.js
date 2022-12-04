@@ -131,12 +131,15 @@ function Export() {
 				if ((ofs == lastOfs) && (lastMsk == msk)) {
 					duplicatesCount++;
 				} else {
-					if (STORE_OFFSET)
+					if (STORE_OFFSET) {
 						finalOutput.push("\tdc.w\t" + ofs + "," + msk  + "," + v(sprt.pos) + "," + v(sprt.ctl) + "\n");
-					else
+						writeOfs += 8;
+					}
+					else {
 						finalOutput.push("\tdc.w\t" + shiftedY + "," + msk  + "," + v(x / 8) + "\n");
+						writeOfs += 4;
+					}
 					thisListTotalPoints++;
-					writeOfs += 4;
 				}
 				lastOfs = ofs;
 				lastMsk = msk;
