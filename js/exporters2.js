@@ -534,69 +534,70 @@ function saveBobs(_saveWindow) {
 			bobStr += ":\t;" +  bobW + "*" + bobH + " pix, " + bitplanesCount + " bitplanes\n";
 
 			var bobCStr = "unsigned char " + thisName + "[] = {\t//" +  bobW + "*" + bobH + " pix, " + bitplanesCount + " bitplanes\n";
-					
-			for (var iBpl = 0; iBpl < bitplanesCount; iBpl++) {
-				var bplMask = 1 << iBpl;
+			
+			if (interleave) {
 				for (var y = 0; y < bobH; y++)
 				{
-					var xmask = 128;
-					var thisByte = 0;
-					for (var x = 0; x < bobW; x++)
-					{
-						var col = getChunkyPix(curStartX + x + _saveWindow.x, curStartY + y + _saveWindow.y);
-						if ((col & bplMask) !== 0) {
-							thisByte |= xmask;
-						}
-						xmask /= 2;
-						if ((x & 7) === 7) {
-							if (xmask !== 0.5)
-								alert("xmask error");
-							if (thisByte !== 0) {
-								hasData = true;
+					for (var iBpl = 0; iBpl < bitplanesCount; iBpl++) {
+						var bplMask = 1 << iBpl;
+						var xmask = 128;
+						var thisByte = 0;
+						for (var x = 0; x < bobW; x++)
+						{
+							var col = getChunkyPix(curStartX + x + _saveWindow.x, curStartY + y + _saveWindow.y);
+							if ((col & bplMask) !== 0) {
+								thisByte |= xmask;
 							}
-							bitplanesData[writeIndex++] = thisByte;
-							xmask = 128;
-							thisByte = 0;
+							xmask /= 2;
+							if ((x & 7) === 7) {
+								if (xmask !== 0.5)
+									alert("xmask error");
+								if (thisByte !== 0) {
+									hasData = true;
+								}
+								bitplanesData[writeIndex++] = thisByte;
+								xmask = 128;
+								thisByte = 0;
+							}
 						}
 					}
 				}
-			}
-			var fileName = thisName;
-			if (hasData || (!bobSkpEmpty)) {
-				if (interleave) {
-					var interData = new Uint8Array(bitplanesData.length);
-					interData.fill(0);
-					var readIndexes = [];
-					var rdIndex = 0;
-					for (var i = 0; i < bitplanesCount; i++) {
-						readIndexes.push(rdIndex);
-						rdIndex += bplSize;
-					}
-					var w = 0;
-					var asmData = null;
-					for (var y = 0; y < bobH; y++) {
-						var yofs = bytesPerLine * y;
-						for (var iBpl = 0; iBpl < bitplanesCount; iBpl++) {
-							for (var x = 0; x < bytesPerLine; x++) {
-								interData[w++] = bitplanesData[readIndexes[iBpl] + x + yofs];
+			} else {
+				for (var iBpl = 0; iBpl < bitplanesCount; iBpl++) {
+					var bplMask = 1 << iBpl;
+					for (var y = 0; y < bobH; y++)
+					{
+						var xmask = 128;
+						var thisByte = 0;
+						for (var x = 0; x < bobW; x++)
+						{
+							var col = getChunkyPix(curStartX + x + _saveWindow.x, curStartY + y + _saveWindow.y);
+							if ((col & bplMask) !== 0) {
+								thisByte |= xmask;
+							}
+							xmask /= 2;
+							if ((x & 7) === 7) {
+								if (xmask !== 0.5)
+									alert("xmask error");
+								if (thisByte !== 0) {
+									hasData = true;
+								}
+								bitplanesData[writeIndex++] = thisByte;
+								xmask = 128;
+								thisByte = 0;
 							}
 						}
 					}
-					asmData = interData;
-					if (xportMode === XPORT_MULTIPLE_BIN) {
-						var blob = new Blob([interData], {type: "application/octet-stream"});
-						var fname = fileName + ".bin";
-						zip.file(fname, blob);
-						//saveAs(blob, fname);
-					}		
-				} else {
-					asmData = bitplanesData;
-					if (xportMode === XPORT_MULTIPLE_BIN) {
-						var blob = new Blob([bitplanesData], {type: "application/octet-stream"});
-						var fname = fileName + ".bin";
-						zip.file(fname, blob);
-						//saveAs(blob, fname);
-					}
+				}	
+			}
+			var fileName = thisName;
+			if (hasData || (!bobSkpEmpty)) {
+				asmData = bitplanesData;
+				if (xportMode === XPORT_MULTIPLE_BIN) {
+					var blob = new Blob([bitplanesData], {type: "application/octet-stream"});
+					var fname = fileName + ".bin";
+					zip.file(fname, blob);
+					//saveAs(blob, fname);
 				}
 				if ((xportMode === XPORT_ASM) || (xportMode === XPORT_C)) {
 					for (var dump = 0; dump < asmData.length; dump++) {
