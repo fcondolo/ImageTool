@@ -54,7 +54,10 @@
                   &nbsp;&nbsp;&nbsp;Crop Y&nbsp;<input type="text" id="cropY" name="cropY" onchange="onCrop()" size="8">
                   <br>&nbsp;&nbsp;&nbsp;Crop W&nbsp;<input type="text" id="cropW" name="cropW" onchange="onCrop()" size="8">
                   &nbsp;&nbsp;&nbsp;Crop H&nbsp;<input type="text" id="cropH" name="cropH" onchange="onCrop()" size="8">
-                  <br><button type="button" class="fa fa-scissors" onclick="onDoCrop()"> Crop</button><button type="button" class="fa fa-magic" onclick="onDrop()"> Reset</button><br>
+                  <br><button type="button" class="fa fa-scissors" onclick="onDoCrop()"> Crop</button>
+                  <button type="button" class="fa fa-magic" onclick="onDrop()"> Reset</button>
+                  <button type="button" class="fa fa-space-shuttle" onclick="onMask()"> Mask</button>
+                  <br>
                   <canvas id='workCanvas'></canvas>
               </center>
               <hr>

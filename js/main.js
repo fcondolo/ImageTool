@@ -370,11 +370,11 @@ function onCrop(){
 	getElem('cropH').value = tcropH;
 }
 
-function onDoCrop() {
+function onDoCrop(_mask = false) {
 	readCropValues();
 
 	global_palette = [];
-	buildWorkImage();
+	buildWorkImage(_mask);
 	buildPaletteFromWorkImage();
 	buildPixelsPaletteIndexes();
 	buildViewImage(0);
@@ -384,6 +384,10 @@ function removeExtension(filename){
     var lastDotPosition = filename.lastIndexOf(".");
     if (lastDotPosition === -1) return filename;
     else return filename.substr(0, lastDotPosition);
+}
+
+function onMask() {
+	onDoCrop(true);
 }
 
 function onDrop(_fname) {
@@ -445,7 +449,7 @@ function onDrop(_fname) {
 	getElem('sprtC').value = v(w / 16);
 }
 
-function buildWorkImage() {
+function buildWorkImage(_mask = false) {
     var algo = getElem("conversionAlgo").value;
     if (algo === "nearestColor") color_convert_method = remapRGBtoAmiga_nearest;
     else if (algo === "clampColor") color_convert_method = remapRGBtoAmiga_clamp;
@@ -468,6 +472,13 @@ function buildWorkImage() {
 	        var ir = workImagePixels[read];
 	        var ig = workImagePixels[read + 1];
 	        var ib = workImagePixels[read + 2];
+			if (_mask) {
+				if ((ir > 0) || (ig > 0) || (ib > 0)) {
+					ir = 255;
+					ig = 255;
+					ib = 255;
+				}
+			}
 	        var col = color_convert_method(ir, ig, ib);
 	        workImagePixels[read] = col.r;
 	        workImagePixels[read+1] = col.g;
