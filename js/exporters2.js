@@ -1,8 +1,6 @@
 function genSpriteCtrlWords(x,y,h, attached) {
-	const sprtOfsX = 128; // getElemInt10('sprtOfsX')
-	const sprtOfsY = 44; // getElemInt10('sprtOfsY')
-	var HSTART = v(x + sprtOfsX);
-	var VSTART = v(y + sprtOfsY);
+	var HSTART = v(x + getElemInt10('sprtOfsX'));
+	var VSTART = v(y + getElemInt10('sprtOfsY'));
 	var VSTOP  = v(VSTART + h);
 
 	// SPRxPOS:
@@ -31,161 +29,7 @@ function genSpriteCtrlWords(x,y,h, attached) {
 	return {pos:pos, ctl:ctl};
 }
 
-function AmigaPixRichMsk(_x) {
-	const x = v(_x) & 7;
-	switch (x) {
-		case 0 : return 128|64|32;
-		case 1 : return 128|64|32;
-		case 2 : return 64|32|16;
-		case 3 : return 32|16|8;
-		case 4 : return 16|8|4;
-		case 5 : return 8|4|2;
-		case 6 : return 4|2|1;
-		case 7 : return 4|2|1;
-	}
-}
 
-function AmigaPixMsk(_x) {
-	const x = v(_x) & 7;
-	switch (x) {
-		case 0 : return 128;
-		case 1 : return 64;
-		case 2 : return 32;
-		case 3 : return 16;
-		case 4 : return 8;
-		case 5 : return 4;
-		case 6 : return 2;
-		case 7 : return 1;
-	}
-}
-
-function Export() {
-	const SPRITE_SIZE = 16;
-	const FAT_HEADER_BYTES = 4
-	const LIST_HEADER_BYTES = 4
-	var myData = "";
-	var FAT = "";
-	var PREFAT = "";
-
-	MYDATA.interp = getElemInt10('interp');
-	precalcInterp();
-	
-	// merge linked lists
-	const saveLists = MYDATA.lists.slice();
-	MYDATA.lists = [];
-	let mergeMe = [];
-	for (let i = 0; i < saveLists.length; i++) {
-		if (saveLists[i].linked) {
-			mergeMe.push(saveLists[i].points.slice()); 
-		} else {
-			if (mergeMe.length > 0) {
-				MYDATA.lists.push({name: "d", points:mergeMe[0].slice(), linked:false});
-				const mergeIndex = MYDATA.lists.length-1;
-				for (let j = 1; j < mergeMe.length; j++) {
-					MYDATA.lists[mergeIndex].points = MYDATA.lists[mergeIndex].points.concat(mergeMe[j].slice());
-				}
-				MYDATA.lists[mergeIndex].points = MYDATA.lists[mergeIndex].points.concat(saveLists[i].points.slice());
-				mergeMe = [];
-			} else {
-				MYDATA.lists.push(saveLists[i]);
-			}
-		}
-	}
-
-	let listIt = 0;
-	const width_bytes = Math.floor(sourceImage.width/ 8);
-	// WRITE FAT HEADER
-	PREFAT += "\tdc.w\t" + MYDATA.lists.length + "\t; total lists count\n"
-	let writeOfs = FAT_HEADER_BYTES + LIST_HEADER_BYTES * MYDATA.lists.length;
-	let duplicatesCount = 0;
-	let minX = 100000;
-	let maxX = -100000;
-	let minY = 100000;
-	let maxY = -100000;
-	finalOutput = [];
-	for (listIt = 0; listIt < MYDATA.lists.length; listIt++) {
-		const curList = MYDATA.lists[listIt].points;
-		// WRITE LIST HEADER
-		FAT += "\tdc.w\t" + writeOfs + "\; list #" + listIt + " 1st pt offset in bytes\n";
-		// WRITE LIST
-		let lastMsk = 0;
-		let lastOfs = -100000;
-		let thisListTotalPoints = 0;
-		for (var keyIt = 0; keyIt < curList.length; keyIt++) {
-			let coord = curList[keyIt].interp;
-			for (let j = 0; j < coord.length; j++) {
-			/*	let spriteData = genSpriteCtrlWords(coord[j].x-SPRITE_SIZE/2, coord[j].y-SPRITE_SIZE/2, SPRITE_SIZE, false);
-				myData += "dc.w\t" + spriteData.pos + ", " + spriteData.ctl  + "\n";
-				writeOfs += 4;
-				*/
-				let x = v(coord[j].x);
-				let y = v(coord[j].y);
-				if (x < minX) minX = x;
-				if (y < minY) minY = y;
-				if (x > maxX) maxX = x;
-				if (y > maxY) maxY = y;
-				let xofs = getElemInt10("xofs");
-				let yofs = getElemInt10("yofs");
-				let ofs = v(v(y * width_bytes) + v(x / 8));
-				let msk = ((v(AmigaPixMsk(x)) & 255) <<8) | (v(AmigaPixRichMsk(x))&255);
-				let sprt = genSpriteCtrlWords(x-8+xofs, y-8+yofs, 16, false);
-				let shiftedY = v(y) << 6;
-				if ((ofs == lastOfs) && (lastMsk == msk)) {
-					duplicatesCount++;
-				} else {
-					if (STORE_OFFSET) {
-						finalOutput.push("\tdc.w\t" + ofs + "," + msk  + "," + v(sprt.pos) + "," + v(sprt.ctl) + "\n");
-						writeOfs += 8;
-					}
-					else {
-						finalOutput.push("\tdc.w\t" + shiftedY + "," + msk  + "," + v(x / 8) + "\n");
-						writeOfs += 4;
-					}
-					thisListTotalPoints++;
-				}
-				lastOfs = ofs;
-				lastMsk = msk;
-			}
-		}				
-		FAT += "\tdc.w\t" + thisListTotalPoints + "\; list #" + listIt + " pt count\n";
-	}
-	for (let wout = 0; wout < finalOutput.length; wout++) {
-		myData += finalOutput[wout];
-	}
-	myData += "\tdc.w\t0,0\t; terminating zeroes\n";
-	PREFAT += "\tdc.w\t" + finalOutput.length + "\t; total points count\n"
-	PREFAT += FAT;
-	if (STORE_OFFSET)
-		PREFAT += "\t; DATA FORMAT: screenOfs, mask, sprt\n";
-	else
-		PREFAT += "\t; DATA FORMAT: y<<6, mask, x/8\n";
-	PREFAT += myData;
-    var file = new Blob([PREFAT], {type: 'text/plain'});
-    var a = document.createElement("a");
-    a.href = URL.createObjectURL(file);
-    a.download = 'path.asm';
-    a.click();
-	let msg = "Export Done. Lists count:" + MYDATA.lists.length + ". Points count: " +  finalOutput.length + " (removed " + (MYDATA.totalPoints-finalOutput.length) + " duplicates)." + " MinX:" + minX +  ". MaxX:" + maxX + ". MinY:" + minY + ". MaxY:" + maxY + ".";
-	if (duplicatesCount>0) {
-		if (duplicatesCount != (MYDATA.totalPoints-finalOutput.length))
-			msg += "There are still duplicates.";
-	}
-	alert(msg);
-
-	// restore original lists
-	MYDATA.lists = saveLists.slice();	
-}
-
-function downloadJSON(content, fileName, contentType) {
-	let interpCount = getElemInt10('interp');
-	content.interp = interpCount;
-	var jsonData = JSON.stringify(content);
-    var a = document.createElement("a");
-    var file = new Blob([jsonData], {type: contentType});
-    a.href = URL.createObjectURL(file);
-    a.download = fileName;
-    a.click();
-}
 
 
 function getChunkyPix(x,y) {
@@ -251,14 +95,20 @@ function saveSprite(_saveWindow) {
 	var xportASM = false;
 	var xportC = false;
 	var singleBin = false;
+	var multipleBin = false;
     if (mode === "sprtASM") xportASM = true;
     else if (mode === "sprt1C") xportC = true;
-    else if (mode === "sprtBin") xportASM = false;
+    else if (mode === "sprtBin") { xportASM = false; multipleBin = true;}
     else if (mode === "sprt1Bin") {
 		xportASM = false;
 		singleBin = true;
 	}
     else alert("unknown Sprite export mode: " + mode);
+
+	var zip = null;
+    if (multipleBin) {
+		zip = new JSZip();
+	}
 
 	if (includePal && (!xportASM) && (!xportC)) {
 		alert("Palette can't be exported with sprites in binary mode. Use the \"Save Palette\" button instead");
@@ -487,12 +337,14 @@ function saveSprite(_saveWindow) {
 					} else if (!singleBin){
 						var blob = new Blob([data], {type: "application/octet-stream"});
 						var fileName = thisName + ".bin";
-						saveAs(blob, fileName);	
+						if (zip) zip.file(fileName, blob);
+						else saveAs(blob, fileName);	
 		
 						if (attached) {
 							var blob = new Blob([data1], {type: "application/octet-stream"});
 							var fileName = thisName + "_attached.bin";
-							saveAs(blob, fileName);	
+							if (zip) zip.file(fileName, blob);
+							else saveAs(blob, fileName);	
 						}
 					}	
 				}	
@@ -506,6 +358,11 @@ function saveSprite(_saveWindow) {
 		if (sprtC <= 0)
 			break;
 }
+
+if (zip) {
+	zip.generateAsync({type:"blob"}).then(function (blob) {saveAs(blob, export_fileName+".zip");});
+}
+
 
 
 if (saveSession)
@@ -598,10 +455,14 @@ function saveBobs(_saveWindow) {
 	const XPORT_SINGLE_BIN = 2;
 	const XPORT_C = 3;
 
+	var zip = null;
 	var xportMode = XPORT_ASM;
     var mode = document.getElementById("bobMode").value;
     if (mode === "bobASM") xportMode = XPORT_ASM;
-    else if (mode === "bobBin") xportMode = XPORT_MULTIPLE_BIN;
+    else if (mode === "bobBin") {
+		xportMode = XPORT_MULTIPLE_BIN;
+		zip = new JSZip();
+	}
     else if (mode === "bobSingleBin") xportMode = XPORT_SINGLE_BIN;
     else if (mode === "bob1C") xportMode = XPORT_C;
     else {
@@ -725,14 +586,16 @@ function saveBobs(_saveWindow) {
 					if (xportMode === XPORT_MULTIPLE_BIN) {
 						var blob = new Blob([interData], {type: "application/octet-stream"});
 						var fname = fileName + ".bin";
-						saveAs(blob, fname);
+						zip.file(fname, blob);
+						//saveAs(blob, fname);
 					}		
 				} else {
 					asmData = bitplanesData;
 					if (xportMode === XPORT_MULTIPLE_BIN) {
 						var blob = new Blob([bitplanesData], {type: "application/octet-stream"});
 						var fname = fileName + ".bin";
-						saveAs(blob, fname);
+						zip.file(fname, blob);
+						//saveAs(blob, fname);
 					}
 				}
 				if ((xportMode === XPORT_ASM) || (xportMode === XPORT_C)) {
@@ -772,6 +635,9 @@ function saveBobs(_saveWindow) {
 			break;
 		}
 		curStartY += bobH;
+	}
+	if (zip) {
+		zip.generateAsync({type:"blob"}).then(function (blob) {saveAs(blob, export_fileName+".zip");});
 	}
 
 	if (xportMode === XPORT_ASM){

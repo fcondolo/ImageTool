@@ -6,30 +6,7 @@ pixelsPaletteIndex : index in palette of each pixel in the work image
 
 */
 
-var VIDEO_DATA = {
-	active : false,
-	video : null,
-	processed : false,
-	processedFrames : [],
-	curFrame : 0
-}
-
-var MYDATA = {
-	lists : [],
-	interp : 1
-};
-
-
-var AMIGA_WIDTH = 320;
-var AMIGA_HEIGHT = 180;
-var STORE_OFFSET = true;
-var CUR_PT_INDEX = -1;
-var UNDOREDO = [];
-var UNDOREDO_INDEX = 0;
-
 var chosenFileName = null;
-var PLAY = 0;
-var PLAYFRAME = 0;
 
 // All variables for the source image (original image given by the user)
 var sourceImage;
@@ -55,6 +32,7 @@ var pixelsPaletteIndex;
 var global_palette = [];
 
 var cropX, cropY, cropW, cropH;
+var views = [];
 var viewX, viewY, viewW, viewH;
 var curViewIndex;
 var realMouseCoord = {x:0,y:0};
@@ -90,37 +68,15 @@ function viewShow_step(timestamp) {
   }
   const elapsed = timestamp - viewShow_start;
   const delta = timestamp - viewShow_previousTimeStamp;
-  const FPS = 1;
-  if (delta >= FPS) {
+
+  if (delta >= 1.0/30.0) {
 	viewShow_previousTimeStamp = timestamp;
-	anim_timer += FPS;
-/*	if (VIDEO_DATA.active && VIDEO_DATA.video) {
-		VIDEO_DATA.video.seekForward(1, processOneVideoFrame);		
-	}*/
-	buildViewImage(anim_timer);
+	anim_timer += 1.0/30.0;
+	buildViewImage(anim_timer * 0.3);
   }
   window.requestAnimationFrame(viewShow_step);
 }
 
-function getParameters() {
-  
-    // Address of the current window
-    address = window.location.search
-  
-    // Returns a URLSearchParams object instance
-    parameterList = new URLSearchParams(address)
-  
-    // Created a map which holds key value pairs
-    let map = new Map()
-  
-    // Storing every key value pair in the map
-    parameterList.forEach((value, key) => {
-        map.set(key, value)
-    })
-  
-    // Returning the map of GET parameters
-    return map
-}
 
 function getElem(_id) {
 	var elm = document.getElementById(_id);
@@ -230,16 +186,12 @@ function setElemChecked(_id,_value) {
 }
 
 function onLoad() {
-	const params = getParameters();
-	const anim = params.get('anim');
-	if (anim && anim.length > 0) {
-		VIDEO_DATA.active = true;
-	}
-
-	precalcSprites();
 	document.getElementById('file-input').addEventListener('change', readSingleFile, false);
-	document.getElementById('file-input2').addEventListener('change', readJSONFile, false);
-	document.getElementById('file-input3').addEventListener('change', readSVGFile, false);
+	getElem('frames').style.display = 'none';
+	setElemValue('sprtScrX', 0);
+	setElemValue('sprtScrY', 0);
+	setElemValue('sprtOfsX', 128);
+	setElemValue('sprtOfsY', 44);
 
     document.onmousemove = function(e) {
         onMouseMove(e);
@@ -261,38 +213,7 @@ function onLoad() {
 	var dropZone = getElem('refImg');
 	dropZone.addEventListener('dragover', handleDragOver, false);
 	dropZone.addEventListener('drop', handleFileSelect, false);
-
-	if (VIDEO_DATA.active) {
-		VIDEO_DATA.video = VideoFrame({
-			id: 'video',
-			frameRate: FrameRates.film,
-			callback: function(response) {
-			}
-		});	
-		getElem("video").controls = false;
-	} else {
-		let elm = getElem("video");
-		elm.width = 0;
-		elm.height = 0;
-		elm.style.visibility = "hidden";
-	}
-
-	workCanvas = getElem('workCanvas');
-	workContext = workCanvas.getContext('2d');
-	viewCanvas = getElem('viewCanvas');
-	viewContext = viewCanvas.getContext('2d');
-
-	viewCanvas.addEventListener('mousedown', onPointerDown)
-	viewCanvas.addEventListener('touchstart', (e) => handleTouch(e, onPointerDown))
-	viewCanvas.addEventListener('mouseup', onPointerUp)
-	viewCanvas.addEventListener('touchend',  (e) => handleTouch(e, onPointerUp))
-	viewCanvas.addEventListener('mousemove', onPointerMove)
-	viewCanvas.addEventListener('touchmove', (e) => handleTouch(e, onPointerMove))
-	viewCanvas.addEventListener( 'wheel', (e) => adjustZoom(e.deltaY*SCROLL_SENSITIVITY))
-
-	zoomDestCoord.x = 0; // relative to center, normalized
-	zoomDestCoord.y = 0;
-
+	
 	window.requestAnimationFrame(viewShow_step);
 }
 
@@ -338,20 +259,17 @@ function isColor0Locked() {
 }
 
 function onLockCol0() {
-	/*
 	if (!getElem('lockclr0').checked) {
 		if (isColor0Locked())
 			global_palette.shift();
 	}
 	onDoCrop();
-	*/
 }
 
 /************************************************ 
 CROPPING
 ************************************************/
 function readCropValues() {
-	/*
 	cropX = parseInt(getElem('cropX').value,10);
 	cropY = parseInt(getElem('cropY').value,10);
 	cropW = parseInt(getElem('cropW').value,10);
@@ -369,7 +287,6 @@ function readCropValues() {
 	}
 
 	resetViewsToCropValues();
-	*/
 }
 
 function writeCropValues(x,y,w,h) {
@@ -389,14 +306,46 @@ function writeCropValues(x,y,w,h) {
 	if (cropW < 0) cropW = 0;
 	if (cropH < 0) cropH = 0;
 
-/*	getElem('cropX').value = cropX;
+	getElem('cropX').value = cropX;
 	getElem('cropY').value = cropY;
 	getElem('cropW').value = cropW;
 	getElem('cropH').value = cropH;
-*/
+
+	resetViewsToCropValues();
 }
 
 
+function addView(_x,_y,_w,_h,_setCurrent) {
+	views.push({x:_x, y:_y, w:_w, h:_h});
+	if (_setCurrent) {
+		curViewIndex = views.length - 1;
+		spriteWindow = {x:_x, y:_y, w:_w, h:_h};
+	}
+}
+
+function popView(_x,_y,_w,_h) {
+	if (views.length > 1) {
+		views.pop();
+	}
+	if (curViewIndex >= views.length)
+		curViewIndex = views.length - 1;
+	if (curViewIndex < 0)
+		curViewIndex = 0;
+	spriteWindow = {x:views[curViewIndex].x, y:views[curViewIndex].y, w:views[curViewIndex].w, h:views[curViewIndex].h};
+	return {x:views[curViewIndex].x, y:views[curViewIndex].y, w:views[curViewIndex].w, h:views[curViewIndex].h};
+}
+
+
+function resetViewsToCropValues() {
+	views = [];
+	addView(cropX, cropY, cropW, cropH, true);
+}
+
+function getCurrentView() {
+	if (curViewIndex < 0) curViewIndex = 0;
+	if (curViewIndex >= views.length) curViewIndex = views.length-1;
+	return views[curViewIndex];
+}
 
 function onCrop(){
 	var tcropX = parseInt(getElem('cropX').value,10);
@@ -421,6 +370,15 @@ function onCrop(){
 	getElem('cropH').value = tcropH;
 }
 
+function onDoCrop() {
+	readCropValues();
+
+	global_palette = [];
+	buildWorkImage();
+	buildPaletteFromWorkImage();
+	buildPixelsPaletteIndexes();
+	buildViewImage(0);
+}
 	
 function removeExtension(filename){
     var lastDotPosition = filename.lastIndexOf(".");
@@ -442,45 +400,53 @@ function onDrop(_fname) {
 	//document.getElementById('file-input').value = export_fileName;
 	var w = sourceImage.width;
 	var h = sourceImage.height
-	AMIGA_WIDTH = w;
-	AMIGA_HEIGHT = h;
 	writeCropValues(0,0,w,h);
+
+	//getElem("refImgName").innerHTML = "file: " + sourceImage.file.name + " - size: " + w + "x" + h + " pixels.";
+	getElem('sprtName').value = export_fileName;
+	getElem('lockclr0').checked = false;
+	getElem('bobC').value = 1;
+	getElem('bobName').value = export_fileName;
+	getElem('bobIncludePal').checked = false;
+	getElem('bobInterlace').checked = false;
+	getElem('bobSkpEmpty').checked = false;
+	getElem('xportInterleave').checked = false;
+	getElem('includeCount').checked = false;
+	getElem('includeCtrl').checked = false;
+	getElem('includePal').checked = false;
+	getElem('skpEmpty').checked = false;
+	
+	getElem('sprtH').value = sourceImage.height;
+	getElem('bobW').value = sourceImage.width;
+	getElem('bobH').value = sourceImage.height;
 
 	sourceCanvas = document.getElementById("sourceCanvas");
 	if (!sourceCanvas) {
 		sourceCanvas = document.createElement('canvas');
 		sourceCanvas.id = "sourceCanvas";
 	}
- 	sourceCanvas.width = w;
+	sourceCanvas.width = w;
 	sourceCanvas.height = h;
 	sourceContext = sourceCanvas.getContext('2d');
 	sourceContext.drawImage(sourceImage,0,0,w,h);
 	sourceImageData = sourceContext.getImageData(0, 0, w, h);
 	sourceImagePixels = sourceImageData.data;
 
+	workCanvas = getElem('workCanvas');
+	workContext = workCanvas.getContext('2d');
+	viewCanvas = getElem('viewCanvas');
+	viewContext = viewCanvas.getContext('2d');
 
 	buildWorkImage();
 	buildPaletteFromWorkImage();
 	buildPixelsPaletteIndexes();
-
-
 	buildViewImage(0);
 
-	document.getElementById('workBench').scrollIntoView();
-}
-
-function grid(_x,_y) {
-	const ofs = 4 * (_x + workContext.width * _y);
-	if (ofs < 0) return 0;
-	if (ofs >= workImagePixels.length-1) return 0;
-	const d = workImagePixels[ofs + 1]; // +1 for green
-	if (d > 100)
-		return 0;
-	return 255;
+	getElem('sprtC').value = v(w / 16);
 }
 
 function buildWorkImage() {
-    var algo = "nearestColor" ;// getElem("conversionAlgo").value;
+    var algo = getElem("conversionAlgo").value;
     if (algo === "nearestColor") color_convert_method = remapRGBtoAmiga_nearest;
     else if (algo === "clampColor") color_convert_method = remapRGBtoAmiga_clamp;
     else alert("unknown algo: " + algo);
@@ -518,7 +484,6 @@ function clampCoord(coord, clamp) {
 }
 
 function buildPaletteFromWorkImage() {
-	/*
 	global_palette = [];
 	if (getElem('lockclr0').checked)
 		global_palette.push({r:CONST_LOCK0_COLOR.r,g:CONST_LOCK0_COLOR.g,b:CONST_LOCK0_COLOR.b});	// impossible color to make sure it remaps to no pixel
@@ -536,11 +501,9 @@ function buildPaletteFromWorkImage() {
 		}
 	}
 	refreshPaletteInfo();
-	*/
 }
 
 function refreshPaletteInfo() {
-	/*
 	getElem('xport1').checked = false;
 	getElem('xport2').checked = false;
 	getElem('xport3').checked = false;
@@ -587,11 +550,10 @@ function refreshPaletteInfo() {
 	} else {
 		getElem('paletteColors').innerHTML = "<b>"+global_palette.length+": too many colors for palette editor</b><br>";
 	}
-*/
+
 }
 
 function buildPixelsPaletteIndexes() {
-	/*
 	pixelsPaletteIndex = new Uint8Array(cropW * cropH);
 	var write = 0;
 	var read = 0;
@@ -604,7 +566,6 @@ function buildPixelsPaletteIndexes() {
 			pixelsPaletteIndex[write++] = getPaletteIndex(ir, ig, ib, false);			
 		}
 	}
-	*/
 }
 
 
@@ -622,7 +583,6 @@ function buildPixelsPaletteIndexes() {
 	
 
 function getPaletteIndex(_r,_g,_b, _autoAddMissing) {
-	/*
 		for (var i = 0; i < global_palette.length; i++) {
 			if ((global_palette[i].r == _r)&&(global_palette[i].g == _g)&&(global_palette[i].b == _b))
 				return i;
@@ -634,7 +594,6 @@ function getPaletteIndex(_r,_g,_b, _autoAddMissing) {
 			alert("getPaletteIndex: color not found");
 			return -1;
 		}
-		*/
 }
 
 function findNearesIndexInPalette(_r,_g,_b) {
@@ -1049,7 +1008,39 @@ function doColorCycle(_amount) {
 	postColorChange();
 }
 
+function postColorChange() {
+	var read = 0;
+	var write = 0;
+	for (var y = 0; y < cropH; y++) {
+		for (var x = 0; x < cropW; x++) {
+			var index = pixelsPaletteIndex[read++];
+			workImagePixels[write++] = global_palette[index].r;
+			workImagePixels[write++] = global_palette[index].g;
+			workImagePixels[write++] = global_palette[index].b;
+			workImagePixels[write++] = 255;
+		}
+	}
 
+	workImageData.data = workImagePixels;
+	workContext.putImageData(workImageData, 0, 0);
+
+	refreshPaletteInfo();
+	buildViewImage(0);
+}
+
+function onNewColor(_index) {
+    var iicol = getElem('colorBox_' + _index.toString()).value;
+    while (iicol.charAt(0) === ' ' || iicol.charAt(0) === '#')
+        iicol = iicol.substr(1);
+    var iival = parseInt(iicol, 16);
+    var r = (iival >> 16) & 255;
+    var g = (iival >> 8) & 255;
+    var b = (iival >> 0) & 255;
+    global_palette[_index].r = r;
+    global_palette[_index].g = g;
+    global_palette[_index].b = b;
+    postColorChange();
+}
 
 
 function isInGrabZone(x,y) {
@@ -1059,8 +1050,8 @@ function isInGrabZone(x,y) {
 	if (!rect)
 		return false;
 
-//	if (grab_state === "progress")
-//		return true;
+	if (grab_state === "progress")
+		return true;
 	
 	if (x < rect.left) return false;
 	if (y < rect.top) return false;
@@ -1073,20 +1064,12 @@ function getMousePos(canvas, evt) {
     var rect = canvas.getBoundingClientRect();
 	var x = evt.clientX - rect.left;
 	var y = evt.clientY - rect.top;
-	return {
-		x: x,
-		y: y
-	  };
-}
+	var ret = rectToGrid(v(x), v(y) , 0, 0);
 
-function getViewPos(evt) {
-    var rect = viewCanvas.getBoundingClientRect();
-	var x = evt.clientX - rect.left;
-	var y = evt.clientY - rect.top;
 	return {
-		x: x,
-		y: y
-	  };
+      x: v(ret.x),
+      y: v(ret.y)
+    };
 }
 
 function setTooltipPos(e, d) {
@@ -1094,72 +1077,92 @@ function setTooltipPos(e, d) {
 	d.top = (e.clientY + 10).toString()+"px";
 }
 
-var ignoreNextClick;
 function onMouseDown(e) {
-	if (SHIFT || CTRL) 
-		ignoreNextClick = true;
+	if (isInGrabZone(e.clientX, e.clientY)) {
+		if (getElemValue('grabMode') !== 'grabmode_none')
+			viewCanvas.style.cursor = "crosshair";
+		if (grab_state !== "done") {	
+			var grabMode = getElem('grabMode').value;
+			if (grabMode !== "grabmode_none") {
+				grab_state = "progress";
+				var m = getMousePos(viewCanvas,e);
+				grab_startx = m.x;
+				grab_starty = m.y;
+	
+				var elm = getElem('mouseFollow').style;
+				elm.display = "block";
+				setTooltipPos(e,elm);	
+			}
+		}	
+	}
 }
 
 function onMouseUp(e) {
+	if (isInGrabZone(e.clientX, e.clientY)) {
+		viewCanvas.style.cursor = "default";
+		if (grab_state !== "done") {	
+			var grabMode = getElem('grabMode').value;
+			if (grabMode !== "grabmode_none") {
+				var m = getMousePos(viewCanvas,e);
+				if (grab_state === "progress") {
+					grab_state = "done";
+					var parent = getElem('grabDone').parentNode.getBoundingClientRect();
+					var elm = getElem('grabDone').style;
+					elm.display = "block";
+					elm.left = (e.clientX - parent.x).toString()+"px";
+					elm.top = (e.clientY - parent.y).toString()+"px";
+				} else {
+					grab_state = "null";
+				}
+				if (grab_state !== "done") {	
+					grab_startx = m.x;
+					grab_starty = m.y;
+				}
+				grab_curx = m.x;
+				grab_cury = m.y;
+				var elm = getElem('mouseFollow').style;
+				elm.display = "none";
+
+				if (grab_curx < grab_startx) {
+					var temp = grab_curx;
+					grab_curx = grab_startx;
+					grab_startx = temp;
+				}
+				if (grab_cury < grab_starty) {
+					var temp = grab_cury;
+					grab_cury = grab_starty;
+					grab_starty = temp;
+				}
+			
+			}	
+		}
+	}
 }
 
 function onMouseMove(e) {
 	realMouseCoord.x = e.clientX;
 	realMouseCoord.y = e.clientY;
 	if (isInGrabZone(e.clientX, e.clientY)) {
-		var elm = getElem('mouseFollow').style;
-		elm.display = "block";
-		setTooltipPos(e,elm);	
-		viewCanvas.style.cursor = "crosshair";
-		var m = getMousePos(viewCanvas,e);
-		grab_curx = m.x;
-		grab_cury = m.y;
-		if (VIDEO_DATA.active)
-			getElem("mouseCoordLabel").innerHTML = "frame: " + Math.floor(VIDEO_DATA.curFrame);
-		else
-			getElem("mouseCoordLabel").innerHTML = v(m.x) + ", " + v(m.y);
-	}
-	else {
-		var elm = getElem('mouseFollow').style;
-		elm.display = "hidden";
+		if (grab_state !== "done") {
+			if (getElemValue('grabMode') !== 'grabmode_none')
+				viewCanvas.style.cursor = "crosshair";
+			var grabMode = getElem('grabMode').value;
+			var m = getMousePos(viewCanvas,e);
+			grab_curx = m.x;
+			grab_cury = m.y;
+			var elm = getElem('mouseFollow').style;
+			setTooltipPos(e,elm);	
+		}
 	}
 }
 
 function onMouseClick(e) {
-	if (VIDEO_DATA.active) return;
-	if (SHIFT && CTRL) return;
-	if (isInGrabZone(e.clientX, e.clientY)) {	
-		if (CTRL) {
-			cameraZoom *= 1.2;
-			return;
-		} else if (SHIFT) {
-			cameraZoom = Math.max(1, cameraZoom/1.2);
-			return;
-		}
-		if (ignoreNextClick) {
-			ignoreNextClick = false;
-		//	return;
-		}
-
-		var m = getViewPos(e);
-		let coord = invtransfo.transformPoint(new DOMPoint(m.x, m.y));
-		if (MYDATA.lists.length === 0) {
-			addNewList("default");
-		}
-
-		let elm = getElem("alllists");
-		if (elm.selectedIndex < 0) { alert("Sorry, there' a bug, please re-select the list you want to edit"); return; }
-		if (elm.selectedIndex >= MYDATA.lists.length) { alert("Sorry, there' a bug, please re-select the list you want to edit"); return; }
-		MYDATA.lists[elm.selectedIndex].points.push({
-			x : (coord.x) / viewCanvas.width,
-			y : (coord.y) / viewCanvas.height,
-			r: getElemInt10('bobsize'),
-			linked: false,
-			interp: []
-		});
-		pushundoredo();
-		refreshCurrentListt();
+	if (grab_state !== "done") {
+		grab_state = "null";
+		getElem('mouseFollow').style.display = "none";
 	}
+	if (viewCanvas && viewCanvas.style)
+		viewCanvas.style.cursor = "default";
 }
 
 function exitGrab() {
@@ -1173,21 +1176,43 @@ function editorOnEsc() {
 		viewCanvas.style.cursor = "default";
 	exitGrab();
 	getElem('addFrame').style.display = "none";
+	setElemValue('viewShow', 'viewShow_normal');
+//	setElemValue('grabMode','grabmode_none');
+	closePreview();
 	inGrabContext = false;
 }
 
-function play(_mode) {
-	if (PLAY === _mode) {
-		PLAYFRAME = 0;
-		PLAY = 0;
-	}
-	else {
-		PLAYFRAME = 0;
-		PLAY = _mode;
-	}
+function grabToView() {
+	exitGrab();
+	buildViewImage(0);
+	addView(grab_startx, grab_starty, grab_curx - grab_startx, grab_cury - grab_starty, true);
+	buildViewImage(0);
 }
 
 
+
+function rectToGrid(_x,_y,_w,_h) {
+	var zoom = getElemInt10("zoom");
+	var grabMode = getElem('grabMode').value;
+	var step = 1;
+	if (grabMode === "grabmode_2px")
+		step = 2;
+	else if (grabMode === "grabmode_4px")
+	step = 4;
+	else if (grabMode === "grabmode_8px")
+		step = 8;
+	else if (grabMode === "grabmode_16px")
+		step = 16;
+	else if (grabMode === "grabmode_32px")
+		step = 32;
+		
+	var x = clampCoord(v(_x/zoom),step);
+	var y = clampCoord(v(_y/zoom),step);
+	var w = clampCoord(v(_w/zoom),step);
+	var h = clampCoord(v(_h/zoom),step);
+
+	return {x:x,y:y,w:w,h:h};
+}
 
 function updateXportValues() {
 	inGrabContext = true;
@@ -1217,12 +1242,11 @@ function grabToBobs() {
 
 
 function onPlatformChosen() {
-/*    target_platform = getElem("platform").value;
+    target_platform = getElem("platform").value;
 	if (target_platform !== "target_OCS") {
 		setElemValue('platform','target_OCS');
 		//alert("Only Amiga OCS is supported for now. Other platforms are WIP...");
 	}
-	*/
 }
 
 function addFrame() {
@@ -1330,6 +1354,53 @@ function grabbedToSprites() {
 	window.location.href = "#saveSprite";	
 }
 
+function onBobW() {
+	if (inGrabContext) {
+		var hCount = v(spriteWindow.w / getElemInt10('bobW'));
+		var vCount = v(spriteWindow.h / getElemInt10('bobH'));
+		setElemValue('bobC', hCount * vCount);
+	} else {
+		var hCount = v(cropW / getElemInt10('bobW'));
+		var vCount = v(cropH / getElemInt10('bobH'));
+		setElemValue('bobC', hCount * vCount);
+	}
+	buildViewImage();	
+	previewBobs(true);
+}
+
+function onBobH() {
+	if (inGrabContext) {
+		var hCount = v(spriteWindow.w / getElemInt10('bobW'));
+		var vCount = v(spriteWindow.h / getElemInt10('bobH'));
+		setElemValue('bobC', hCount * vCount);
+	} else {
+		var hCount = v(cropW / getElemInt10('bobW'));
+		var vCount = v(cropH / getElemInt10('bobH'));
+		setElemValue('bobC', hCount * vCount);
+	}
+	buildViewImage();	
+	previewBobs(true);
+}
+
+function onBobC() {
+	buildViewImage();	
+	previewBobs(true);
+}
+
+function onSprtH() {
+	if (inGrabContext) {
+		var hCount = v(spriteWindow.w / 16);
+		var vCount = v(spriteWindow.h / getElemInt10('sprtH'));
+		setElemValue('sprtC', hCount * vCount);
+	}
+	buildViewImage();	
+	previewSprites(true);
+}
+
+function onSprtC() {
+	buildViewImage();	
+	previewSprites(true);
+}
 
 function onGrabCancelButton() {
 	exitGrab();
@@ -1350,273 +1421,203 @@ function readSingleFile(e) {
 	reader.readAsDataURL(file);
 }
   
-function readJSONFile(e) {
-	var file = e.target.files[0];
-	if (!file) {
-	  return;
-	}
-	const fname = e.target.files[0].name;
-	var reader = new FileReader();
-	reader.onload = function(e) {
-		try {
-			MYDATA = JSON.parse(e.target.result);
-		} catch (error) {
-			alert("Can't load this file, make sure it's a valid Path file.");
-		}		
-		setElemValue('interp', MYDATA.interp);
-		setTimeout(function() { refreshLists(); }, 500);
-	};
-	reader.readAsText(file);
-}
-
-function getPoints(str)
-{
-    str = str.replace(/[0-9]+-/g, function(v)
-        {
-            return v.slice(0, -1) + " -";
-        })
-        .replace(/\.[0-9]+/g, function(v)
-        {
-            return v.match(/\s/g) ? v : v + " ";
-        });
-    
-    var keys = str.match(/[MmLlHhVv]/g);
-    var paths = str.split(/[MmLlHhVvZz]/g)
-    .filter(function(v){ return v.length > 0})
-    .map(function(v){return v.trim()});
-    
-    var x = 0, y = 0, res = "";
-    for(var i = 0, lenKeys = keys.length ; i < lenKeys ; i++)
-    {
-        switch(keys[i])
-        {
-            case "M": case "L": case "l":
-                var arr = paths[i].split(/\s/g).filter(function(v) { return v.length > 0 });
-                for(var t = 0, lenPaths = arr.length ; t < lenPaths ; t++)
-                {
-                    if(t%2 === 0)
-                    {
-                        x = (keys[i] == "l" ? x : 0) + parseFloat(arr[t]);
-                        res += x;
-                    } else 
-                    {
-                        y = (keys[i] == "l" ? y : 0) + parseFloat(arr[t]);
-                        res += y;
-                    }
-                    if(t < lenPaths - 1) res += " ";
-                }
-                break;
-            case "V":
-                y = parseFloat(paths[i]);
-                res += x + " " + y;
-                break;
-            case "v":
-                y += parseFloat(paths[i]);
-                res += x + " " + y;
-                break;
-            case "H":
-                x = parseFloat(paths[i]);
-                res += x + " " + y;
-                break;
-            case "h":
-                x += parseFloat(paths[i]);
-                res += x + " " + y;
-                break;
-        }
-        if(i < lenKeys - 1) res += " ";
-    }
-    
-    return res;
-}
-
-
-function findPrevPt(_table, _i) {
-	for (var i = _i; i >= 0; i--) {
-		const pt = _table[i];
-		if (!pt.removeable)
-			return pt;
-	}
-	return null;
-}
-
-function findNextPt(_table, _i) {
-	for (var i = _i; i < _table.length; i++) {
-		const pt = _table[i];
-		if (!pt.removeable)
-			return pt;
-	}
-	return null;
-}
-
-function sqr (x) {
-	return x * x;
-  }
-  
-  function dist2 (v, w) {
-	return sqr(v[0] - w[0]) + sqr(v[1] - w[1]);
-  }
-  
-  // p - point
-  // v - start point of segment
-  // w - end point of segment
-  function distToSegmentSquared (p, v, w) {
-	var l2 = dist2(v, w);
-	if (l2 === 0) return dist2(p, v);
-	var t = ((p[0] - v[0]) * (w[0] - v[0]) + (p[1] - v[1]) * (w[1] - v[1])) / l2;
-	t = Math.max(0, Math.min(1, t));
-	return dist2(p, [ v[0] + t * (w[0] - v[0]), v[1] + t * (w[1] - v[1]) ]);
-  }
-  
-  // p - point
-  // v - start point of segment
-  // w - end point of segment
-  function distToSegment (p, v, w) {
-	return Math.sqrt(distToSegmentSquared(p, v, w));
-  }
-
-function Contour(_name) {
-	const minDist = 4;
-	const out = fincContour();
-	let pts = [];
-
-	prevX = -1000;
-	prevY = -1000;
-
-	for (var i = 0; i < out.length; i++) {
-		const pt = out[i];
-		let candidate = {
-			x : pt[0],
-			y : pt[1],
-			r: 1,
-			removeable : false
-		}
-		let d = Math.sqrt((pt[0]-prevX)*(pt[0]-prevX)+(pt[1]-prevY)*(pt[1]-prevY));
-		if ( d > 1) {
-			prevX = pt[0];
-			prevY = pt[1];
-			pts.push(candidate);
-		}
-	}
-
-	prevX = -1000;
-	prevY = -1000;
-	for (var i = 0; i < pts.length; i++) {
-		let pt = pts[i];
-		let d = Math.sqrt((pt.x-prevX)*(pt.x-prevX)+(pt.y-prevY)*(pt.y-prevY));
-		if ( d < minDist) {
-			pt.removeable = true;
-		} else {
-			prevX = pt.x;
-			prevY = pt.y;
-		}
-	}
-
-	/*
-	// DOT PROD FILTER
-	for (var i = 1; i < pts.length-1; i++) {
-		let prevPt = findPrevPt(pts, i-1);
-		let thisPt = pts[i];
-		let nextPt = findNextPt(pts, i+1);
-		if (nextPt !== null && prevPt !== null) {
-			let prevVx = thisPt.x - prevPt.x;
-			let prevVy = thisPt.y - prevPt.y;
-			let n = Math.sqrt(prevVx*prevVx + prevVy*prevVy);
-			if (n > 0) {
-				prevVx /= n;
-				prevVy /= n;
-				let nextVx = nextPt.x - thisPt.x;
-				let nextVy = nextPt.y - thisPt.y;
-				n = Math.sqrt(nextVx*nextVx + nextVy*nextVy);
-				if (n > 0) {
-					nextVx /= n;
-					nextVx /= n;
-					const mydot = Math.abs(nextVx * prevVx + nextVy * prevVy);
-					if (Math.abs(mydot) < 0.9) {
-						prevPt.removeable = false;
-						thisPt.removeable = false;
-						nextPt.removeable = false;
-					}
-				}
-			}
+function previewSprites(_updateOnly) {
+	setElemValue('viewShow','viewShow_sprites');
 	
-		}
-		
-	}
-	*/
+	var zoom = v(parseInt(document.getElementById("zoom").value, 10));
+	var cvs = getElem('previewCanvas');
+	var ctx = cvs.getContext('2d');
+	cvs.width = zoom * spriteWindow.w;
+	cvs.height = zoom * spriteWindow.h;
+	ctx.width = zoom * spriteWindow.w;
+	ctx.height = zoom * spriteWindow.h;
+	ctx.imageSmoothingEnabled = false;
+	ctx.drawImage(workCanvas, spriteWindow.x, spriteWindow.y, spriteWindow.w, spriteWindow.h, 0, 0, zoom * spriteWindow.w, zoom * spriteWindow.h);
 
-	const thres = parseInt(getElem("contourRange").value);
-	for (var start = 0; start < pts.length-1; start++) {
-		let startPt = pts[start];
-		let p1 = [startPt.x,startPt.y];
-		for (var next = start+1; next < pts.length; next++) {
-			let nextPt = pts[next];
-			let p2 = [nextPt.x,nextPt.y];
-			let totald = 0;
-			let middle = start + 1;
-			for (; middle < next; middle++) {
-				let midPt = pts[middle];
-				let mid = [midPt.x,midPt.y];
-				let d = distToSegment(mid,p1,p2);
-				totald = d;
-				if (totald > viewCanvas.width/thres)
-					break;
+
+	var thisView = spriteWindow;
+	var sprtC = getElemInt10('sprtC');
+	var originalsprtC = sprtC;
+	var maxsprtC = 0;
+	var sprtH = zoom * getElemInt10('sprtH');
+	var sprtW = zoom * 16;
+
+	var startX = 0;
+	var endX = startX + thisView.w * zoom;
+	var startY = 0;
+	var endY = startY + thisView.h * zoom;
+	ctx.strokeStyle = "rgba(0,255,0,100)";
+	for (var y = startY; y < endY; y += sprtH) {
+		for (var x = startX; x < endX; x += sprtW) {
+			if (sprtC > 0) {
+				ctx.beginPath();
+				ctx.moveTo(x,y);
+				ctx.lineTo(x+sprtW,y);
+				ctx.lineTo(x+sprtW,y+sprtH);
+				ctx.lineTo(x,y+sprtH);
+				ctx.lineTo(x,y);
+				ctx.stroke();			
+				sprtC--;	
+			} else {
+				ctx.fillRect(x,y,sprtW,sprtH);
 			}
-			if (totald > viewCanvas.width/thres) {
-				for (var it = start+1; it < middle; it++) {
-					let midPt = pts[it];
-					midPt.removeable = true;
-				}
-				start = middle;
-				break;
+			maxsprtC++;
+		}	
+	}
+	if (originalsprtC > maxsprtC) {
+		setElemValue('sprtC', maxsprtC);
+	}
+
+	if (!_updateOnly) {
+		var e = {clientX:realMouseCoord.x, clientY:realMouseCoord.y};
+		var elm = getElem('preview').style;
+		elm.display = "block";
+		elm.left = (e.clientX + 10).toString()+"px";
+		elm.top = (e.clientY  - v(ctx.height * 3/4)).toString()+"px";
+	}
+}
+
+function previewBobs(_updateOnly) {
+	setElemValue('viewShow','viewShow_bobs');
+
+	var zoom = v(parseInt(document.getElementById("zoom").value, 10));
+	var cvs = getElem('previewCanvas');
+	var ctx = cvs.getContext('2d');
+	cvs.width = zoom * spriteWindow.w;
+	cvs.height = zoom * spriteWindow.h;
+	ctx.width = zoom * spriteWindow.w;
+	ctx.height = zoom * spriteWindow.h;
+	ctx.imageSmoothingEnabled = false;
+	ctx.drawImage(workCanvas, spriteWindow.x, spriteWindow.y, spriteWindow.w, spriteWindow.h, 0, 0, zoom * spriteWindow.w, zoom * spriteWindow.h);
+
+
+	var thisView = spriteWindow;
+	var sprtC = getElemInt10('bobC');
+	var originalsprtC = sprtC;
+	var maxsprtC = 0;
+	var sprtH = zoom * getElemInt10('bobH');
+	var sprtW = zoom * getElemInt10('bobW');
+
+	var startX = 0;
+	var endX = startX + thisView.w * zoom;
+	var startY = 0;
+	var endY = startY + thisView.h * zoom;
+	ctx.strokeStyle = "rgba(0,255,0,100)";
+	for (var y = startY; y < endY; y += sprtH) {
+		for (var x = startX; x < endX; x += sprtW) {
+			if (sprtC > 0) {
+				ctx.beginPath();
+				ctx.moveTo(x,y);
+				ctx.lineTo(x+sprtW,y);
+				ctx.lineTo(x+sprtW,y+sprtH);
+				ctx.lineTo(x,y+sprtH);
+				ctx.lineTo(x,y);
+				ctx.stroke();			
+				sprtC--;	
+			} else {
+				ctx.fillRect(x,y,sprtW,sprtH);
 			}
-		}
+			maxsprtC++;
+		}	
+	}
+	if (originalsprtC > maxsprtC) {
+		setElemValue('bobC', maxsprtC);
 	}
 
-	// SCALE & REMOVE REMOVEABLE POINTS
-	for (var i = 0; i < pts.length; i++) {
-		pts[i].x /= workCanvas.width;
-		pts[i].y /= workCanvas.height;
-		if (pts[i].removeable) {
-			pts.splice(i,1);
-			if (i>0)
-				i--;
-		}
+	if (!_updateOnly) {
+		var e = {clientX:realMouseCoord.x, clientY:realMouseCoord.y};
+		var elm = getElem('preview').style;
+		elm.display = "block";
+		elm.left = (e.clientX + 10).toString()+"px";
+		elm.top = (e.clientY  - v(ctx.height * 3/4)).toString()+"px";
 	}
+}
 
-	if (!_name || (_name.length === 0))
-		_name = "generated";
-		
-	MYDATA.lists.push({name: _name, points:pts, linked:false});
-	pushundoredo();
-	refreshLists();
+function closePreview() {
+	var elm = getElem('preview').style;
+	elm.display = "none";
 }
 
 
-function readSVGFile(e) {
-	var file = e.target.files[0];
-	if (!file) {
-	  return;
-	}
-	const fname = e.target.files[0].name;
-	var reader = new FileReader();
-	reader.onload = function(e) {
-		try {
-			var parser = new DOMParser();
-			//var doc = parser.parseFromString(e.target.result, "image/svg+xml");
-			let out = getPoints(e.target.result);
-			MYDATA.lists.push({name: "loaded SVG", points:[], linked: false});
-			pushundoredo();
-			for (var i = 0; i < out.length; i++) {
-				const pt = out[i];
-			}
-		} catch (error) {
-			alert("Can't load this file, make sure it's a valid SVG file.");
+function onNewFrameName() {
+	var name = getElemValue('frameName');
+	for (var i = 0;  i< frames.length; i++) {
+		if (name === frames[i].label) {
+			alert("label '" + name + "' already used for frame #" + i);
+			setElemValue('frameName', name + "_2");
+			rerturn;
 		}
-		setTimeout(function() { refreshLists(); }, 500);
-	};
-	reader.readAsText(file);
+	}
 }
 
+
+function framesToSprites() {
+	if (global_palette.length > 16) {
+		alert("Can't export Sprites:  - Wrong palette size - Found " + global_palette.length + " colors, but the Sprites export supports 16 colors max.");
+		return;
+	}
+
+	for (var i = 0; i < frames.length; i++) {
+		var f = frames[i];
+		if (f.w > 16) {
+			alert("In grab frames mode, sprites must be 16 pix wide maximum, but frame #" + i + " (" + f.label + ") is " + f.w + " pix wide" );
+			return;
+		}
+	}
+
+	inGrabContext = true;
+	spriteWindow = {x: grab_startx, y:grab_starty, w:grab_curx - grab_startx, h:grab_cury - grab_starty};
+	setElemValue('sprtC', 1);
+	setElemValue('sprtH', spriteWindow.h);
+	setElemValue('viewShow','viewShow_sprites');
+	setElemChecked('includeCtrl', true);
+	setElemValue('sprtMode','sprtASM');
+	setElemChecked('includePal', false);
+
+	startSaveSession();
+	for (var i = 0; i < frames.length; i++) {
+		var f = frames[i];
+		spriteWindow = {x:f.x, y:f.y, w:f.w, h:f.h, label:f.label};
+		saveSprite({x:f.x, y:f.y, w:f.w, h:f.h, label:f.label});
+	}
+	saveSession += export_fileName + "_palette:\n";			
+	saveSession = savePalette(saveSession) + "\n\n";
+
+	endSaveSession();
+	
+	exitGrab();
+}
+
+function framesToBobs() {
+	alert("Not yet implemented. life is cruel. Reach me on FaceBook or comment on Pouet if you need this one!");
+	return;
+	if (global_palette.length > 32) {
+		alert("Can't export Bobs:  - Wrong palette size - Found " + global_palette.length + " colors, but the Bobs export supports 32 colors max. You can only use 'Save RGB' with this image .");
+		return;
+	}
+
+	inGrabContext = true;
+	spriteWindow = {x: grab_startx, y:grab_starty, w:grab_curx - grab_startx, h:grab_cury - grab_starty};
+	setElemValue('bobC', 1);
+	setElemValue('bobW', spriteWindow.w);
+	setElemValue('bobH', spriteWindow.h);
+	setElemValue('viewShow','viewShow_bobs');
+	setElemValue('bobMode','bobASM');
+	setElemChecked('bobIncludePal', false);
+	
+	startSaveSession();
+	for (var i = 0; i < frames.length; i++) {
+		var f = frames[i];
+		spriteWindow = {x:f.x, y:f.y, w:f.w, h:f.h, label:f.label};
+		saveBob({x:f.x, y:f.y, w:f.w, h:f.h, label:f.label});
+	}
+	saveSession += export_fileName + "_palette:\n";			
+	saveSession = savePalette(saveSession) + "\n\n";
+
+	endSaveSession();
+	
+	exitGrab();
+}
 
 
 function getBuffer(fileData) {
@@ -1629,6 +1630,49 @@ function getBuffer(fileData) {
 		resolve(bytes);
 	  }
   }
+}
+
+function importPalette() {
+	var mode = getElemValue('loadpalettefrom');
+	if (mode === 'loadpalettefrom_binary') {
+		let input = document.createElement('input');
+		input.type = 'file';
+		input.onchange = _ => {
+				  let files =   Array.from(input.files);
+				  fileData = new Blob([files[0]]);
+				  // Pass getBuffer to promise.
+				  var promise = new Promise(getBuffer(fileData));
+				  // Wait for promise to be resolved, or log error.
+				  promise.then(function(data) {
+					remapPaletteFromBin(data);
+				  }).catch(function(err) {
+					console.log('Error: ',err);
+				  });
+		};
+		input.click();	
+	} else if (mode === 'loadpalettefrom_asm') {
+		let input = document.createElement('input');
+		input.type = 'file';
+		input.onchange = _ => {
+				  let files =   Array.from(input.files);
+				  var reader = new FileReader();
+				  reader.onload = function(e) {
+					  remapPaletteFromText(e.target.result);
+				  };
+				  reader.readAsText(files[0]);
+		};
+		input.click();	
+		} else if (mode === 'loadpalettefrom_clip') {
+			navigator.clipboard.readText()
+			.then(text => {
+				remapPaletteFromText(text);
+			})
+			.catch(err => {
+			  alert('Failed to read clipboard contents: ', err);
+			});
+		} else {
+			alert('unknow load palette mode');
+		}
 }
 
 
@@ -1756,175 +1800,33 @@ function remapPaletteFromBin(_bin) {
 }
 
 
-function refreshLists(_index) {
-	let elm = getElem("alllists");
-	if (MYDATA.lists.length === 0) {
-		elm.innerHTML = "";
-		const elm2 = getElem("ptslist");
-		elm2.innerHTML = "";
-		return;
+function postPaletteUpdate() {
+	pixelsPaletteIndex = new Uint8Array(cropW * cropH);
+	var write = 0;
+	var read = 0;
+	for (var y = 0; y < cropH; y++) {
+		for (var x = 0; x < cropW; x++) {
+			var ir = workImagePixels[read];
+			var ig = workImagePixels[read+1];
+			var ib = workImagePixels[read+2];
+			read += 4;
+			pixelsPaletteIndex[write++] = findNearesIndexInPalette(ir, ig, ib);
+		}
 	}
-	let val = "";
-	for (var i = 0; i < MYDATA.lists.length; i++) {
-		const lst = MYDATA.lists[i];
-		val += '<option value="' + lst.name +'">' + lst.name + '</option>';
-	}
-	elm.innerHTML = val;
-	if (!_index)
-		elm.selectedIndex = MYDATA.lists.length-1;
-	else
-		elm.selectedIndex = _index;
-	refreshCurrentList();
-}
-
-
-function refreshCurrentList() {
-	const elm = getElem("ptslist");
-	if (MYDATA.lists.length === 0) {
-		elm.innerHTML = "";
-		return;
-	}
-	let index = getElem("alllists").selectedIndex;
-	if (index < 0) {
-		index = 0;
-		getElem("alllists").selectedIndex = index;
-	}
-	if (index >= MYDATA.lists.length) {
-		index = MYDATA.lists.length-1;
-		getElem("alllists").selectedIndex = index;
-	}
-	getElem("isLinked").checked = MYDATA.lists[index].linked;
-	const lst = MYDATA.lists[index].points;
-	elm.size = Math.min(20,lst.length);
-	let content = "";
-	for (let i = 0; i < lst.length; i++) {
-		const s =  v(lst[i].x * workCanvas.width) + ", " + v(lst[i].y * workCanvas.height);
-		content += '<option value="' + i + '"> ' + s + ' </option>';
-	}
-	elm.innerHTML = content;
-	getElem("ptcount").innerHTML = "count: " + lst.length;
-	onptsel();
-}
-
-function addNewList(_name, _points, _linked) {
-	if (_name === null)
-		_name = getElemValue("listname");
-	if (_name.length < 1)
-		_name = "default";
 	
-	if (_points === null)
-		_points = [];
-
-	if (_linked === null)
-		_linked = false;
-
-		let index = getElem("alllists").selectedIndex;
-	if (index < 0) {
-		MYDATA.lists.push({name: _name, points:_points, linked:_linked});
-		index = -1;
-	}
-	else
-		MYDATA.lists.splice(index+1, 0, {name: _name, points:[]});
-
-	pushundoredo();
-	refreshLists(index+1);
-}
-
-function deleteList() {
-	let index = getElem("alllists").selectedIndex;
-	if (index < 0) {alert("please select the list to be deleted"); return;}
-	MYDATA.lists.splice(index, 1);
-	if (index >= MYDATA.lists.length)
-		index = MYDATA.lists.length-1;
-	if (index < 0)
-		index = 0;
-	pushundoredo();
-	refreshLists(index);
-}
-
-
-
-function linkList() {
-	let index = getElem("alllists").selectedIndex;
-	if (index < 0) {alert("please select the list to be linked"); return;}
-	MYDATA.lists[index].linked = isElemChecked("isLinked");
-	pushundoredo();
-	refreshLists(index);
-}
-
-
-function pushundoredo() {
-	if (UNDOREDO_INDEX >= UNDOREDO.length-1) {
-		UNDOREDO.push(JSON.parse(JSON.stringify(MYDATA)));
-		UNDOREDO_INDEX = UNDOREDO.length-1;
-		return
-	}
-	UNDOREDO[UNDOREDO_INDEX] = JSON.parse(JSON.stringify(MYDATA));
-	UNDOREDO_INDEX++;
-}
-
-function undo() {
-	if (UNDOREDO_INDEX > 0) {
-		UNDOREDO_INDEX--;
-		MYDATA = JSON.parse(JSON.stringify(UNDOREDO[UNDOREDO_INDEX]));
-		refreshLists();
-	}
-}
-
-function redo() {
-	if (UNDOREDO_INDEX < UNDOREDO.length-1) {
-		UNDOREDO_INDEX++;
-		MYDATA = JSON.parse(JSON.stringify(UNDOREDO[UNDOREDO_INDEX]));
-		refreshLists();
-	}
-}
-
-function onptsel() {
-	const elm = getElem("ptslist");
-	if (elm.value && elm.value.length > 0)
-		CUR_PT_INDEX = parseInt(elm.value);
-	else
-		CUR_PT_INDEX = -1;
-}
-
-function moveCurPt(_dx, _dy) {
-	onptsel();
-	if (CUR_PT_INDEX >= 0) {
-		const index = getElem("alllists").selectedIndex;
-		if (index >= 0 && index < MYDATA.lists.length) {
-			let PATH_PTS = MYDATA.lists[index].points;
-			let coord = {x:PATH_PTS[CUR_PT_INDEX].x * workCanvas.width, y:PATH_PTS[CUR_PT_INDEX].y * workCanvas.height};
-			coord.x += _dx;
-			coord.y += _dy;
-			PATH_PTS[CUR_PT_INDEX].x = coord.x / workCanvas.width;
-			PATH_PTS[CUR_PT_INDEX].y = coord.y / workCanvas.height;
-			pushundoredo();
-		}	
-	}
-}
-
-function delCurPt(){
-	if (CUR_PT_INDEX >= 0) {
-		const index = getElem("alllists").selectedIndex;
-		if (index >= 0 && index < MYDATA.lists.length) {
-			let PATH_PTS = MYDATA.lists[index].points;
-			PATH_PTS.splice(CUR_PT_INDEX, 1);
-			pushundoredo();
-			refreshCurrentList();
-		}	
-	}
-}
-
-function animPrev() {
-	if (VIDEO_DATA.active && VIDEO_DATA.video) {
-		VIDEO_DATA.curFrame--;
-		VIDEO_DATA.video.seekBackward(1, processOneVideoFrame);
+	var read = 0;
+	var write = 0;
+	for (var y = 0; y < cropH; y++) {
+		for (var x = 0; x < cropW; x++) {
+			var index = pixelsPaletteIndex[read++];
+			var col = global_palette[index];
+			workImagePixels[write] = col.r;
+			workImagePixels[write+1] = col.g;
+			workImagePixels[write+2] = col.b;
+			write += 4;
+		}
 	}	
-}
-
-function animNext() {
-	if (VIDEO_DATA.active && VIDEO_DATA.video) {
-		VIDEO_DATA.curFrame++;
-		VIDEO_DATA.video.seekForward(1, processOneVideoFrame);
-	}		
+	workImageData.data = workImagePixels;
+	workContext.putImageData(workImageData, 0, 0);
+	refreshPaletteInfo();	
 }

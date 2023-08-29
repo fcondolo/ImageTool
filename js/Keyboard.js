@@ -15,7 +15,6 @@ function keyDown(event) {
 function keyUp(event) {
     var key = event.keyCode;
     switch (key) {
-        case 8 : if(SHIFT) { delCurPt(); event.preventDefault(); } break; // Backspace
         // Special keys
         case 16: SHIFT = false; break;
         case 17: CTRL = false; break; // PC
@@ -28,24 +27,32 @@ function keyUp(event) {
 	    case 34: break; // pag down
 
         // Arrows
-        case 37: if(SHIFT) { moveCurPt(-1,0); event.preventDefault(); } break; // left
-        case 38: if(SHIFT) { moveCurPt(0,-1); event.preventDefault(); } break; // up
-        case 39: if(SHIFT) { moveCurPt(1,0); event.preventDefault(); } break; // right
-        case 40: if(SHIFT) { moveCurPt(0,1); event.preventDefault(); } break; // down
-        case 46: if(SHIFT) { delCurPt(); event.preventDefault(); } break; // del
+        case 37: break; // left
+        case 38: break; // up
+        case 39: break; // right
+        case 40: break; // down
+        case 46: onEditorDel(); break; // del
 
         // Numbers
-	    case 48: break; // 0
-	    case 49: setElemValue('bobsize', v(Math.max(1,getElemInt10('bobsize') / 2))); break; // 1
-	    case 50: setElemValue('bobsize', v(Math.min(16,getElemInt10('bobsize') * 2))); break; // 2
-	    case 51: break; // 4
-	    case 52: break; // 8
-	    case 53: break; // 16
-	    case 54: break; // 32
+	    case 48: setElemValue('grabMode', 'grabmode_none'); break; // 0
+	    case 49: 	{
+            if (SHIFT) {
+                var zoom = getElemInt10("zoom");
+                if (zoom < 8) {
+                    zoom++;
+                    setElemValue("zoom",zoom);
+                }    
+            } else setElemValue('grabMode', 'grabmode_1px'); break; // 1
+        }
+	    case 50: setElemValue('grabMode', 'grabmode_2px'); break; // 2
+	    case 51: setElemValue('grabMode', 'grabmode_4px'); break; // 4
+	    case 52: setElemValue('grabMode', 'grabmode_8px'); break; // 8
+	    case 53: setElemValue('grabMode', 'grabmode_16px'); break; // 16
+	    case 54: setElemValue('grabMode', 'grabmode_32px'); break; // 32
 
         // Alphabet
         case 65: break; // a
-        case 66: break; // b
+        case 66: window.location.href = "#saveBobs"; break; // b
         case 67:
             if (CTRL) {
                 // copy
@@ -65,24 +72,36 @@ function keyUp(event) {
 	    case 80: break; // p
 	    case 81: break; // q
 	    case 82: break; // r
-        case 83: break;// s
+        case 83: window.location.href = "#saveSprite"; break; // s
         case 84: break; // t
         case 85: break; // u
         case 86: break; // v
-        case 87: break; // w
+        case 87: window.location.href = "#workBench"; break; // w
         case 88: break; // x
-        case 89: if (CTRL) redo(); break; // y
-        case 90: if (CTRL) undo(); break; // z
+        case 89: break; // y
+        case 90: break; // z
 
         case 107:
         case 171: 	{
-            cameraZoom *= 1.2;
-        } break; // plus
+                var zoom = getElemInt10("zoom");
+            if (zoom < 8) {
+                zoom++;
+                setElemValue("zoom",zoom);
+            }
+        }
+        break; // plus
 
-        case 173: {
-        } break;       // minus
+        case 173:        // minus
         case 109:        // numpad minus
-        case 189: cameraZoom = Math.max(1,cameraZoom /= 1.2); break;
+        case 189: if ((!SHIFT) && (!CTRL)){
+            var zoom = getElemInt10("zoom");
+            if (zoom > 1) {
+                zoom--;
+                setElemValue("zoom",zoom);
+            }
+        }
+        break; // minus
+
         default: console.log("unmapped keycode:" + key); break;
     }
 }
