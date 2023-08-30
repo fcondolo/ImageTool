@@ -374,7 +374,7 @@ function onDoCrop(_mask = false) {
 	readCropValues();
 
 	global_palette = [];
-	buildWorkImage(_mask);
+	buildWorkImage();
 	buildPaletteFromWorkImage();
 	buildPixelsPaletteIndexes();
 	buildViewImage(0);
@@ -387,7 +387,49 @@ function removeExtension(filename){
 }
 
 function onMask() {
-	onDoCrop(true);
+	let beginMsk = 1;
+	let endMsk = global_palette.length - 1;
+
+	let candidate = parseInt(getElem('beginMsk').value,10);
+	if (isNaN(candidate)) alert("Error: 'Mask first color index' is not a number");
+	else if (candidate >= global_palette.length) alert("Error: 'Mask first color index' is bigger than palete size");
+	else if (candidate < 0) alert("Error: 'Mask first color index' is negative");
+	else beginMsk = candidate;
+
+	candidate = parseInt(getElem('endMsk').value,10);
+	if (isNaN(candidate)) alert("Error: 'Last first color index' is not a number");
+	else if (candidate >= global_palette.length) alert("Error: 'Mask last color index' is bigger than palete size");
+	else if (candidate < 0) alert("Error: 'Mask last color index' is negative");
+	else endMsk = candidate;
+
+	var palIndexIt = 0;
+	var pixIt = 0;
+	for (var y = 0; y < cropH; y++) {
+		for (var x = 0; x < cropW; x++) {
+			let palIndex = pixelsPaletteIndex[palIndexIt];
+			let col = 0;
+			if ((palIndex >= beginMsk) && (palIndex <= endMsk)) {
+				col = 255;
+				pixelsPaletteIndex[palIndexIt] = 1;
+			} else {
+				col = 0;
+				pixelsPaletteIndex[palIndexIt] = 0;
+			}
+			palIndexIt++;
+			workImagePixels[pixIt] = col;
+			workImagePixels[pixIt+1] = col;
+			workImagePixels[pixIt+2] = col;
+			pixIt += 4;
+		}
+	}
+	workImageData.data = workImagePixels;
+	workContext.putImageData(workImageData, 0, 0);
+
+	global_palette = [];
+	global_palette.push({r:0,g:0,b:0});
+	global_palette.push({r:255,g:255,b:255});
+	refreshPaletteInfo();
+	buildViewImage(0);
 }
 
 function onDrop(_fname) {
@@ -447,9 +489,13 @@ function onDrop(_fname) {
 	buildViewImage(0);
 
 	getElem('sprtC').value = v(w / 16);
+	if (global_palette.length>0) {
+		getElem('beginMsk').value = 1;
+		getElem('endMsk').value = global_palette.length - 1;
+	}
 }
 
-function buildWorkImage(_mask = false) {
+function buildWorkImage() {
     var algo = getElem("conversionAlgo").value;
     if (algo === "nearestColor") color_convert_method = remapRGBtoAmiga_nearest;
     else if (algo === "clampColor") color_convert_method = remapRGBtoAmiga_clamp;
@@ -472,13 +518,6 @@ function buildWorkImage(_mask = false) {
 	        var ir = workImagePixels[read];
 	        var ig = workImagePixels[read + 1];
 	        var ib = workImagePixels[read + 2];
-			if (_mask) {
-				if ((ir > 0) || (ig > 0) || (ib > 0)) {
-					ir = 255;
-					ig = 255;
-					ib = 255;
-				}
-			}
 	        var col = color_convert_method(ir, ig, ib);
 	        workImagePixels[read] = col.r;
 	        workImagePixels[read+1] = col.g;

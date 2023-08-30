@@ -55,8 +55,11 @@
                   <br>&nbsp;&nbsp;&nbsp;Crop W&nbsp;<input type="text" id="cropW" name="cropW" onchange="onCrop()" size="8">
                   &nbsp;&nbsp;&nbsp;Crop H&nbsp;<input type="text" id="cropH" name="cropH" onchange="onCrop()" size="8">
                   <br><button type="button" class="fa fa-scissors" onclick="onDoCrop()"> Crop</button>
-                  <button type="button" class="fa fa-magic" onclick="onDrop()"> Reset</button>
+                  <br>&nbsp;&nbsp;&nbsp;Mask first color index&nbsp;<input type="text" id="beginMsk" name="beginMsk" size="6">
+                  &nbsp;&nbsp;&nbsp;Mask last color index&nbsp;<input type="text" id="endMsk" name="endMsk" size="6">
                   <button type="button" class="fa fa-space-shuttle" onclick="onMask()"> Mask</button>
+                  <br>
+                  <button type="button" class="fa fa-magic" onclick="onDrop()"> Reset</button>
                   <br>
                   <canvas id='workCanvas'></canvas>
               </center>
@@ -228,7 +231,7 @@
          <!-- ===================================== START FOOTER ===================================== -->
           <div id="footer">
                 <img src="data/logo.png">
-                <br>All bugs by Soundy
+                <br>All bugs by Soundy - soundydeadliners at gmail.com
           </div>
 
       </body></html>
