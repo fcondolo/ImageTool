@@ -14,6 +14,11 @@
 
 <div class="grid">
     <br><center><form action="index.html"><input type="submit" value="Back"/></form></center></head><br>
+    <b>Disclaimer:</b> Oh boy, I suck at HTML, CSS, JavaScript and frameworks, you've been warned. 
+    I chose HTML/javascript for this tool to be able to share with the community, as it's the easiest platform
+    to get something to work on Windows, Mac, Linux, etc. Many will prefer command-line tools (and I agree), still it
+     can be useful to have a GUI for some features, such as the color drag'n drop. Still, it works, and several Amiga demos and games
+     used it, so I guess it's worth checking. Have fun!<br><i> - Soundy -</i><br>
     <h3>Video Tutorial</h3>
     You can check this (absolutely not comprehensive) tutorial as an intro:
     <br>
@@ -83,6 +88,8 @@
         <li>The 'HTML to Platform color conversion' combo-box allows you to choose how the image colors are converted to the OCS palette. Here's the thing: HTML is using 8 bits per component (256 possibilities), while OCS has 4 (16 possibilities). In hexadecimal, means we need to convert a 2 digit numner #xx into a 1 digit number #x</li>
         <ul>- Clamp Color will just cut the least significant bits (4 bits right shift), so #E9 will become #E for example.</ul>
         <ul>- Nearest Color will get to the nearest color: #E9 will become #F (because 9 is closer to 16 than to 0, so we round up). #E3 will become #E because 3 is closer to 0. Of course, it means that #FA for example will be remapped to #F as there's no value superior to F. Just try both options, you'll barely notice the difference.</ul>
+        <li>Below are the cropping params. By default, the full image is used, but you can work on a sub-section.</li>
+        <li>Below are the mask params. Use these only if you want to generate a mask for your image.</li>
         <li>Below, you'll see the converted image (Cropped, using 12 bits Amiga colors).</li>
         <li>Everything you change in this section will reset the other sections (palette will be rebuilt from the pixels selected by the crop)</li>
     </ul>    
@@ -151,6 +158,12 @@
         <ul> - Export franes to Bobs is not yet functional. </ul>
     </ul>
 	<br>
+    <hr><h3>Questions / Requests</h3>
+    <ul>
+        <li>Send an email at <b>soundydeadliners at gmail.com</b></li>
+        <li><a href="https://www.pouet.net/prod.php?which=90167">Leave a comment on Pouet</a></li>
+    </ul>
+	<br>
     <br><center><form action="index.html"><input type="submit" value="Back"/></form></center></head><br>
         
 </div><!-- END GRID -->
@@ -158,7 +171,8 @@
 <!-- ===================================== START FOOTER ===================================== -->
 <div class="clear"></div>
 <div id="footer">
-All bugs by Soundy / The Deadliners.
-</div></div>
+    <img src="data/logo.png">
+    <br>All bugs by Soundy - soundydeadliners at gmail.com
+</div>
 
 </body></html>
