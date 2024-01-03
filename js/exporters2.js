@@ -701,35 +701,149 @@ function saveBobs(_saveWindow) {
 
 
 function saveBpl_ST() {
-	var bytesPerLine = v(cropW/8);
-	var bplSize = v(cropH * bytesPerLine);
-	var bitplanesData = new Uint8Array(actualBplXportCount * bplSize);
+	// Bitplane definition: https://www.fxjavadevblog.fr/atari-st-4-bitplanes/
+
+	const bytesPerLine = v(cropW/2);
+	const imgSize = v(cropH * bytesPerLine);
+	let bitplanesData = new Uint8Array(imgSize);
 	bitplanesData.fill(0);
 
 	var writeIndex = 0;
 
-	for (var iBpl = 0; iBpl < bitplanesCount; iBpl++) {
-		for (var y = 0; y < cropH; y++)
+	for (var y = 0; y < cropH; y++)
+	{
+		let x = 0;
+		while (x < cropW)
 		{
-			var xmask = 128;
-			var thisByte = 0;
-			for (var x = 0; x < cropW; x++)
-			{
-				var col = getChunkyPix(x,y);
-				if ((col & bplMask) !== 0) {
-					thisByte |= xmask;
-				}
-				xmask /= 2;
-				if ((x & 7) === 7) {
-					if (xmask !== 0.5)
-						alert("xmask error");
-					bitplanesData[writeIndex++] = thisByte;
-					xmask = 128;
-					thisByte = 0;
-				}
-			}
+			let _4Words = new Uint8Array(8);
+			_4Words.fill(0);
+
+			let col1 = getChunkyPix(x,y);
+			x++;
+			let col2 = getChunkyPix(x,y);
+			x++;
+			let col3 = getChunkyPix(x,y);
+			x++;
+			let col4 = getChunkyPix(x,y);
+			x++;
+
+			if ((col1 & 1) == 1) _4Words[0] |= 1<<7;
+			if ((col1 & 2) == 2) _4Words[2] |= 1<<7;
+			if ((col1 & 4) == 4) _4Words[4] |= 1<<7;
+			if ((col1 & 8) == 8) _4Words[6] |= 1<<7;
+
+			if ((col2 & 1) == 1) _4Words[0] |= 1<<6;
+			if ((col2 & 2) == 2) _4Words[2] |= 1<<6;
+			if ((col2 & 4) == 4) _4Words[4] |= 1<<6;
+			if ((col2 & 8) == 8) _4Words[6] |= 1<<6;
+
+			if ((col3 & 1) == 1) _4Words[0] |= 1<<5;
+			if ((col3 & 2) == 2) _4Words[2] |= 1<<5;
+			if ((col3 & 4) == 4) _4Words[4] |= 1<<5;
+			if ((col3 & 8) == 8) _4Words[6] |= 1<<5;
+
+			if ((col4 & 1) == 1) _4Words[0] |= 1<<4;
+			if ((col4 & 2) == 2) _4Words[2] |= 1<<4;
+			if ((col4 & 4) == 4) _4Words[4] |= 1<<4;
+			if ((col4 & 8) == 8) _4Words[6] |= 1<<4;
+
+			col1 = getChunkyPix(x,y);
+			x++;
+			col2 = getChunkyPix(x,y);
+			x++;
+			col3 = getChunkyPix(x,y);
+			x++;
+			col4 = getChunkyPix(x,y);
+			x++;
+
+			if ((col1 & 1) == 1) _4Words[0] |= 1<<3;
+			if ((col1 & 2) == 2) _4Words[2] |= 1<<3;
+			if ((col1 & 4) == 4) _4Words[4] |= 1<<3;
+			if ((col1 & 8) == 8) _4Words[6] |= 1<<3;
+
+			if ((col2 & 1) == 1) _4Words[0] |= 1<<2;
+			if ((col2 & 2) == 2) _4Words[2] |= 1<<2;
+			if ((col2 & 4) == 4) _4Words[4] |= 1<<2;
+			if ((col2 & 8) == 8) _4Words[6] |= 1<<2;
+
+			if ((col3 & 1) == 1) _4Words[0] |= 1<<1;
+			if ((col3 & 2) == 2) _4Words[2] |= 1<<1;
+			if ((col3 & 4) == 4) _4Words[4] |= 1<<1;
+			if ((col3 & 8) == 8) _4Words[6] |= 1<<1;
+
+			if ((col4 & 1) == 1) _4Words[0] |= 1;
+			if ((col4 & 2) == 2) _4Words[2] |= 1;
+			if ((col4 & 4) == 4) _4Words[4] |= 1;
+			if ((col4 & 8) == 8) _4Words[6] |= 1;
+
+			col1 = getChunkyPix(x,y);
+			x++;
+			col2 = getChunkyPix(x,y);
+			x++;
+			col3 = getChunkyPix(x,y);
+			x++;
+			col4 = getChunkyPix(x,y);
+			x++;
+
+			if ((col1 & 1) == 1) _4Words[1] |= 1<<7;
+			if ((col1 & 2) == 2) _4Words[3] |= 1<<7;
+			if ((col1 & 4) == 4) _4Words[5] |= 1<<7;
+			if ((col1 & 8) == 8) _4Words[7] |= 1<<7;
+
+			if ((col2 & 1) == 1) _4Words[1] |= 1<<6;
+			if ((col2 & 2) == 2) _4Words[3] |= 1<<6;
+			if ((col2 & 4) == 4) _4Words[5] |= 1<<6;
+			if ((col2 & 8) == 8) _4Words[7] |= 1<<6;
+
+			if ((col3 & 1) == 1) _4Words[1] |= 1<<5;
+			if ((col3 & 2) == 2) _4Words[3] |= 1<<5;
+			if ((col3 & 4) == 4) _4Words[5] |= 1<<5;
+			if ((col3 & 8) == 8) _4Words[7] |= 1<<5;
+
+			if ((col4 & 1) == 1) _4Words[1] |= 1<<4;
+			if ((col4 & 2) == 2) _4Words[3] |= 1<<4;
+			if ((col4 & 4) == 4) _4Words[5] |= 1<<4;
+			if ((col4 & 8) == 8) _4Words[7] |= 1<<4;
+
+			col1 = getChunkyPix(x,y);
+			x++;
+			col2 = getChunkyPix(x,y);
+			x++;
+			col3 = getChunkyPix(x,y);
+			x++;
+			col4 = getChunkyPix(x,y);
+			x++;
+
+			if ((col1 & 1) == 1) _4Words[1] |= 1<<3;
+			if ((col1 & 2) == 2) _4Words[3] |= 1<<3;
+			if ((col1 & 4) == 4) _4Words[5] |= 1<<3;
+			if ((col1 & 8) == 8) _4Words[7] |= 1<<3;
+
+			if ((col2 & 1) == 1) _4Words[1] |= 1<<2;
+			if ((col2 & 2) == 2) _4Words[3] |= 1<<2;
+			if ((col2 & 4) == 4) _4Words[5] |= 1<<2;
+			if ((col2 & 8) == 8) _4Words[7] |= 1<<2;
+
+			if ((col3 & 1) == 1) _4Words[1] |= 1<<1;
+			if ((col3 & 2) == 2) _4Words[3] |= 1<<1;
+			if ((col3 & 4) == 4) _4Words[5] |= 1<<1;
+			if ((col3 & 8) == 8) _4Words[7] |= 1<<1;
+
+			if ((col4 & 1) == 1) _4Words[1] |= 1;
+			if ((col4 & 2) == 2) _4Words[3] |= 1;
+			if ((col4 & 4) == 4) _4Words[5] |= 1;
+			if ((col4 & 8) == 8) _4Words[7] |= 1;
+
+			bitplanesData[writeIndex++] = _4Words[0];
+			bitplanesData[writeIndex++] = _4Words[1];
+			bitplanesData[writeIndex++] = _4Words[2];
+			bitplanesData[writeIndex++] = _4Words[3];
+			bitplanesData[writeIndex++] = _4Words[4];
+			bitplanesData[writeIndex++] = _4Words[5];
+			bitplanesData[writeIndex++] = _4Words[6];
+			bitplanesData[writeIndex++] = _4Words[7];
 		}
-	}	
+	}
 	var blob = new Blob([bitplanesData], {type: "application/octet-stream"});
 	var fileName = export_fileName + "_bitplanes.bin";
 	saveAs(blob, fileName);
