@@ -702,6 +702,7 @@ function saveBobs(_saveWindow) {
 
 function saveBpl_ST() {
 	// Bitplane definition: https://www.fxjavadevblog.fr/atari-st-4-bitplanes/
+	// Bitplane Simulator: https://www.fxjavadevblog.fr/atari-st-4-bitplanes-simulator/
 
 	const bytesPerLine = v(cropW/2);
 	const imgSize = v(cropH * bytesPerLine);
@@ -1115,25 +1116,40 @@ function savePalette(_asText){
 		data.fill(0);
 		index = 0;
 	}
+
+	const remainingBits = 8 - platform_colorBits;
+	const maxVal = (1 << platform_colorBits) - 1;
 	for (var i = startCol; i < global_palette.length; i++)
-	{
+	{				
 		var r = nearest(global_palette[i].r);
 		var g = nearest(global_palette[i].g);
 		var b = nearest(global_palette[i].b);
-		var ar = v(v(r>>4)&15);
-		var ab = v(v(b>>4)&15);
+		var ar = v(v(r>>remainingBits)&maxVal);
+		var ag = v(v(g>>remainingBits)&maxVal);
+		var ab = v(v(b>>remainingBits)&maxVal);
 			
+
+		switch(target_platform) {
+			case "target_STE" :
+				ar = componentToSTE(ar);
+				ag = componentToSTE(ag);
+				ab = componentToSTE(ab);
+			break;
+			default:
+			break;
+		}
+	
 		data[index++] = v(ar);
-		data[index++] = v(ab | g);
+		data[index++] = v(ab | (ag << 4));
 		if (_asText) {
-			_asText += "\tdc.w\t$"+ TwoCharStringHEX(v(ar)) + TwoCharStringHEX(v(ab | g)) +"\n";
+			_asText += "\tdc.w\t$"+ TwoCharStringHEX(v(ar)) + TwoCharStringHEX(v(ab | (ag << 4))) +"\n";
 		}
 		if (asCper) {
-			asCper += "\tdc.w\t$"+ TwoCharStringHEX(firstCperCol>>8) + TwoCharStringHEX(firstCperCol&255) + "," + "$" + TwoCharStringHEX(v(ar)) + TwoCharStringHEX(v(ab | g)) +"\n";
+			asCper += "\tdc.w\t$"+ TwoCharStringHEX(firstCperCol>>8) + TwoCharStringHEX(firstCperCol&255) + "," + "$" + TwoCharStringHEX(v(ar)) + TwoCharStringHEX(v(ab | (ag << 4))) +"\n";
 			firstCperCol += 2;
 		}
 		if (asC) {
-			asC += "\t0x"+ TwoCharStringHEX(v(ar)) + TwoCharStringHEX(v(ab | g));
+			asC += "\t0x"+ TwoCharStringHEX(v(ar)) + TwoCharStringHEX(v(ab | (ag << 4)));
 			if (i < global_palette.length - 1 ){
 				asC += ",";
 			}
@@ -1218,5 +1234,4 @@ function savePaletteC(_asText){
 	}
 	return asC;
 }
-
 

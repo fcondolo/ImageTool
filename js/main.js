@@ -623,12 +623,17 @@ function buildPixelsPaletteIndexes() {
 	
 
   function nearest(val) {
-		var res = Math.floor(val) & 0xf0;
-		if ((val & 15) >= 8)
-			res += 0x10;
-		if (res > 0xf0)
-			res = 0xf0;
-		return res;
+	const remainingBits = 8 - platform_colorBits;
+	const mask =  (0xff & (~((1 << remainingBits)-1))) & 0xff;
+	const maxVal = (1 << platform_colorBits) - 1;
+	const threshold = (maxVal + 1) / 2;
+	const _r = Math.floor(val);
+	let r = _r & mask;
+    if ((_r & maxVal) >= threshold)
+        r += maxVal + 1;
+    if (r > mask)
+        r = mask;
+	return r;
 }
 	
 
@@ -968,13 +973,11 @@ function nearestPalEntry(_e) {
 
 	switch(target_platform) {
 		case "target_STE" :
-			return componentToSTE(col.r).toString(16) + componentToSTE(col.g).toString(16) + componentToSTE(col.b).toString(16);
-		break; 
+		return componentToSTE(col.r).toString(16) + componentToSTE(col.g).toString(16) + componentToSTE(col.b).toString(16);
 		case "target_OCS" :
 		case "target_ST" : 
 		default:
-			return col.r.toString(16) + col.g.toString(16) + col.b.toString(16);
-		break;
+		return col.r.toString(16) + col.g.toString(16) + col.b.toString(16);
 	}
 	
 }
