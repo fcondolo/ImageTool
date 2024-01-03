@@ -39,13 +39,13 @@ var realMouseCoord = {x:0,y:0};
 var frames = [];
 
 var spriteWindow;
-var target_platform;
+var target_platform, platform_colorBits;
 
 var CONST_LOCK0_COLOR = {r:345,g:456,b:567};
 
 var export_fileName = "file";
 
-var color_convert_method = remapRGBtoAmiga_clamp;
+var color_convert_method = remapRGB_clamp;
 
 // grabbing
 var grab_state = "null";
@@ -497,9 +497,9 @@ function onDrop(_fname) {
 
 function buildWorkImage() {
     var algo = getElem("conversionAlgo").value;
-    if (algo === "nearestColor") color_convert_method = remapRGBtoAmiga_nearest;
-    else if (algo === "clampColor") color_convert_method = remapRGBtoAmiga_clamp;
-    else alert("unknown algo: " + algo);
+	if (algo === "nearestColor") color_convert_method = remapRGB_nearest;
+	else if (algo === "clampColor") color_convert_method = remapRGB_clamp;
+	else alert("unknown algo: " + algo);
 
 	workCanvas.width = cropW;
 	workCanvas.height = cropH;
@@ -578,14 +578,14 @@ function refreshPaletteInfo() {
 	if (global_palette.length < 33) {
 		var palCol = '<ul style="width:100%" id="items">';
 		for (var i = 0; i < global_palette.length; i++) {
-			var amigaColorValue;
+			var colorValue;
 			if ((i === 0) && isColor0Locked()) {
-				amigaColorValue = "000";
+				colorValue = "000";
 				palCol += '<li>' + TwoCharString(i) + ' (LOCKED)</li>';	
 			} else {
-				amigaColorValue = nearestPalEntry(global_palette[i]);
+				colorValue = nearestPalEntry(global_palette[i]);
 				var palVal = "#" + TwoCharStringHEX(global_palette[i].r) + TwoCharStringHEX(global_palette[i].g) + TwoCharStringHEX(global_palette[i].b);
-				palCol += '<li>' + TwoCharString(i) + ' ($'+ amigaColorValue +'):' + '<input style="height: 40px; width:50%;" id="colorBox_' + i + '" onchange="onNewColor(' + i + ')" type="color" value="' + palVal + '"></li>';	
+				palCol += '<li>' + TwoCharString(i) + ' ($'+ colorValue +'):' + '<input style="height: 40px; width:50%;" id="colorBox_' + i + '" onchange="onNewColor(' + i + ')" type="color" value="' + palVal + '"></li>';	
 			}
 		}
 		palCol += "</ul>";
@@ -913,52 +913,70 @@ function onPalExportMode() {
 }
 
 
-function clampPalEntry(_e) {
-	var r = _e.r&0xf0;
-	var g = _e.g&0xf0;
-	var b = _e.b&0xf0;
-	r >>= 4;
-	g >>= 4;
-	b >>= 4;
-	return r.toString(16)+g.toString(16)+b.toString(16);
+function remapRGB_nearest(_r, _g, _b) {
+	const remainingBits = 8 - platform_colorBits;
+	const mask =  (0xff & (~((1 << remainingBits)-1))) & 0xff;
+	const maxVal = (1 << platform_colorBits) - 1;
+	const threshold = (maxVal + 1) / 2;
+
+	var r = _r & mask;
+    if ((_r & maxVal) >= threshold)
+        r += maxVal + 1;
+    if (r > mask)
+        r = mask;
+
+	var g = _g & mask;
+	if ((_g & maxVal) >= threshold)	
+		g += maxVal + 1;
+    if (g > mask)
+        g = mask;
+	
+	var b = _b & mask;		
+    if ((_b & maxVal) >= threshold)
+        b += maxVal + 1;
+    if (b > mask)
+        b = mask;
+
+	return { r:r, g:g, b:b };
 }
 
-function remapRGBtoAmiga_nearest(_r, _g, _b) {
-    var r = _r & 0xf0;
-    if ((_r & 15) >= 8)
-        r += 0x10;
-    if (r > 0xf0)
-        r = 0xf0;
+function remapRGB_clamp(_r, _g, _b) {
+	const remainingBits = 8 - platform_colorBits;
+	const mask =  (0xff & (~((1 << remainingBits)-1))) & 0xff;
 
-    var g = _g & 0xf0;
-    if ((_g & 15) >= 8)
-        g += 0x10;
-    if (g > 0xf0)
-        g = 0xf0;
-
-    var b = _b & 0xf0;
-    if ((_b & 15) >= 8)
-        b += 0x10;
-    if (b > 0xf0)
-        b = 0xf0;
-
-    return { r:r, g:g, b:b };
-}
-
-function remapRGBtoAmiga_clamp(_r, _g, _b) {
-    var r = _r & 0xf0;
-    var g = _g & 0xf0;
-    var b = _b & 0xf0;
+	var r = _r & mask;
+    var g = _g & mask;
+    var b = _b & mask;
     return { r: r, g: g, b: b };
+}
+
+function componentToSTE(_c) {
+	const _0 = _c & 1;
+	const _1 = (_c & 2) >> 1;
+	const _2 = (_c & 4) >> 2;
+	const _3 = (_c & 8) >> 3;
+	return _1 | (_2 << 1)| (_3 << 2)| (_0 << 3)
 }
 
 function nearestPalEntry(_e) {
 	var col = color_convert_method(_e.r, _e.g, _e.b);
+	const remainingBits = 8 - platform_colorBits;
 
-	col.r >>= 4;
-	col.g >>= 4;
-	col.b >>= 4;
-	return col.r.toString(16)+col.g.toString(16)+col.b.toString(16);
+	col.r >>= remainingBits;
+	col.g >>= remainingBits;
+	col.b >>= remainingBits;
+
+	switch(target_platform) {
+		case "target_STE" :
+			return componentToSTE(col.r).toString(16) + componentToSTE(col.g).toString(16) + componentToSTE(col.b).toString(16);
+		break; 
+		case "target_OCS" :
+		case "target_ST" : 
+		default:
+			return col.r.toString(16) + col.g.toString(16) + col.b.toString(16);
+		break;
+	}
+	
 }
 
 
@@ -1293,9 +1311,26 @@ function grabToBobs() {
 
 function onPlatformChosen() {
     target_platform = getElem("platform").value;
-	if (target_platform !== "target_OCS") {
-		setElemValue('platform','target_OCS');
-		//alert("Only Amiga OCS is supported for now. Other platforms are WIP...");
+	
+	switch(target_platform) {
+		case "target_OCS" :
+		case "target_STE" :
+			platform_colorBits = 4;
+		break; 
+		case "target_ST" : 
+			platform_colorBits = 3;
+		break;
+		default:
+			setElemValue('platform','target_OCS');
+			platform_colorBits = 4;
+			alert("Sorry, this platform is not yet available");
+		break;
+	}
+	if (workCanvas != null) {
+		buildWorkImage();
+		buildPaletteFromWorkImage();
+		buildPixelsPaletteIndexes();
+		buildViewImage(0);	
 	}
 }
 
@@ -1682,7 +1717,14 @@ function getBuffer(fileData) {
   }
 }
 
+function OCSOnly(_msg) {
+	if (target_platform == "target_OCS") return true;
+	alert("sorry, " + _msg + " is only available for Amiga OCS for the moment");
+	return false;
+}
+
 function importPalette() {
+	if (!OCSOnly("palette import")) return;
 	var mode = getElemValue('loadpalettefrom');
 	if (mode === 'loadpalettefrom_binary') {
 		let input = document.createElement('input');

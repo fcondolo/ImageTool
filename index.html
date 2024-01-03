@@ -17,7 +17,6 @@
     <script type="text/javascript" src="js/kickstart.js"></script>                                  <!-- KICKSTART -->
     <script type="text/javascript" src="js/dragdrop.js"></script>
     <script type="text/javascript" src="js/Keyboard.js"></script>
-    <script type="text/javascript" src="js/gen_rgb.js"></script>
     <script type="text/javascript" src="js/viewEdit.js"></script>
     <script type="text/javascript" src="js/exporters2.js"></script>
     <script type="text/javascript" src="js/main.js"></script>
@@ -37,9 +36,9 @@
                   Target Platform:
                   <select id="platform"onchange="onPlatformChosen()">
                     <option value=target_OCS>Amiga OCS</option>
-                    <option value=target_nothing>--- coming soon ---</option>
-                    <option value=target_ST>Atari ST</option>
                     <option value=target_STE>Atari STE</option>
+                    <option value=target_ST>Atari ST</option>
+                    <option value=target_nothing>--- coming soon ---</option>
                     <option value=target_CPC>Amstrad CPC</option>
                     <option value=target_C64>Commodore 64</option>
                   </select>
@@ -73,16 +72,16 @@
                 <br>lock color 0&nbsp;<input type="checkbox" id="lockclr0" name="lockclr0" onchange="onLockCol0()"></br>
                 <br><button onclick="importPalette()">Import</button>
                 &nbsp;from:&nbsp;<select id="loadpalettefrom">
-                  <option value=loadpalettefrom_binary>.bin</option>
-                  <option value=loadpalettefrom_asm>.asm</option>
-                  <option value=loadpalettefrom_clip>clipboard</option>
+                  <option value=loadpalettefrom_binary>.bin (file)</option>
+                  <option value=loadpalettefrom_asm>.asm (file)</option>
+                  <option value=loadpalettefrom_clip>.asm (clipboard)</option>
                   </select>
                 <div id='paletteColors' style='background-color:rgba(200,200,200,0.5);'>
                 </div>
               </div>
               <div class="col_9" style='background-color:rgba(0,0,0,0);'>
                 Zoom&nbsp;<input type="range" min="1" max="8" value="2" class="slider" id="zoom" oninput="buildViewImage()">
-                &nbsp;&nbsp;&nbsp;<label for="colorcycle">Color Cycle: </label><input type="range" min="0" max="511" value="1" class="slider" id="colorcycle" oninput="doColorCycle()" onmousedown="startColorCycle()" ontouchstart="startColorCycle()" onmouseup="endColorCycle()" ontouchend="endColorCycle()"  onfocusout="endColorCycle()">
+                &nbsp;&nbsp;&nbsp;<span for="colorcycle">Color Cycle: </span><input type="range" min="0" max="511" value="1" class="slider" id="colorcycle" oninput="doColorCycle()" onmousedown="startColorCycle()" ontouchstart="startColorCycle()" onmouseup="endColorCycle()" ontouchend="endColorCycle()"  onfocusout="endColorCycle()">
                 <br>show:&nbsp;<select id="viewShow" onchange="buildViewImage()">
                   <option value=viewShow_normal>normal</option>
                   <option value=viewShow_sprites>sprites</option>
@@ -103,7 +102,7 @@
               <div id="frames" class="col_9" style='background-color:rgba(200,200,200,0.5);'>
                 <center><h3>Grabbed Frames</h3><br>
                 <canvas id='framesCanvas'></canvas>
-                <br><label id="curFrameLabel"></label>
+                <br><span id="curFrameLabel"></span>
                 <br><button type="button" class="fa fa-arrow-circle-o-left" onclick="prevFrame();"></button>
                 <button type="button" class="fa fa-arrow-circle-o-right" onclick="nextFrame();"></button>
                 <button type="button" class="fa fa-trash-o fa-lg" onclick="deleteFrame();"></button>
@@ -201,7 +200,7 @@
             </div>
           <br><br>
           <div id = "mouseFollow" style = "display:none; position:fixed; z-index:10; background-color: #6B6B6B; color: white;">
-            <label id="mouseCoordLabel"></label>
+            <span id="mouseCoordLabel"></span>
           </div>
           <div id = "preview" style = "display:none; position:fixed; z-index:10; background-color: #6B6B6B; color: white;">
             <canvas id='previewCanvas'></canvas>

@@ -700,10 +700,57 @@ function saveBobs(_saveWindow) {
 }
 
 
+function saveBpl_ST() {
+	var bytesPerLine = v(cropW/8);
+	var bplSize = v(cropH * bytesPerLine);
+	var bitplanesData = new Uint8Array(actualBplXportCount * bplSize);
+	bitplanesData.fill(0);
+
+	var writeIndex = 0;
+
+	for (var iBpl = 0; iBpl < bitplanesCount; iBpl++) {
+		for (var y = 0; y < cropH; y++)
+		{
+			var xmask = 128;
+			var thisByte = 0;
+			for (var x = 0; x < cropW; x++)
+			{
+				var col = getChunkyPix(x,y);
+				if ((col & bplMask) !== 0) {
+					thisByte |= xmask;
+				}
+				xmask /= 2;
+				if ((x & 7) === 7) {
+					if (xmask !== 0.5)
+						alert("xmask error");
+					bitplanesData[writeIndex++] = thisByte;
+					xmask = 128;
+					thisByte = 0;
+				}
+			}
+		}
+	}	
+	var blob = new Blob([bitplanesData], {type: "application/octet-stream"});
+	var fileName = export_fileName + "_bitplanes.bin";
+	saveAs(blob, fileName);
+  }
+
 
 function saveBpl() {
-	if ((cropW&7)!=0) {
-		alert("Can't export bitplanes:  - Wrong image width - Shoud be a multiple of 8 - Found: " + cropW + " pix width. Please adjust cropping values.");
+	let maxColCount = 32;
+	let wMask = 7;
+	switch(target_platform) {
+		case "target_STE" :
+		case "target_ST" : 
+			maxColCount = 16;
+			wMask = 15;
+		break;
+		default:
+		break;
+	}
+
+	if ((cropW & wMask)!=0) {
+		alert("Can't export bitplanes:  - Wrong image width - Shoud be a multiple of " + (wMask + 1).toString() + " - Found: " + cropW + " pix width. Please adjust cropping values.");
 		return;
 	}
 
@@ -717,8 +764,8 @@ function saveBpl() {
 		colCount--;
 	}
 
-	if (colCount > 32) {
-		alert("Can't export bitplanes:  - Wrong palette size - Found " + colCount + " colors, but the bitplane export supports 32 colors max. You can only use 'Save RGB' with this image .");
+	if (colCount > maxColCount) {
+		alert("Can't export bitplanes:  - Wrong palette size - Found " + colCount + " colors, but the bitplane export supports " + maxColCount + " colors max. You can only use 'Save RGB' with this image .");
 		return;
 	}
 
@@ -733,6 +780,24 @@ function saveBpl() {
 	xportBpl[1] = document.getElementById('xport2').checked;
 	xportBpl[2] = document.getElementById('xport3').checked;
 	xportBpl[3] = document.getElementById('xport4').checked;
+
+	switch(target_platform) {
+		case "target_STE" :
+		case "target_ST" : 
+			if (document.getElementById('xport5').checked) {
+				alert("can't save 5 bitplanes on ST / STe");
+				document.getElementById('xport5').checked = false;
+			}
+			if (document.getElementById('xportInterleave').checked) {
+				alert("can't export interleaved bitplanes on ST / STe");
+				document.getElementById('xportInterleave').checked = false;
+			}
+			saveBpl_ST();
+		return;
+		default:
+		break;
+	}
+
 	xportBpl[4] = document.getElementById('xport5').checked;
 
 	var interleave = document.getElementById('xportInterleave').checked;
@@ -742,7 +807,6 @@ function saveBpl() {
 		if (xportBpl[i])
 			actualBplXportCount++;
 	}
-
 
 	var bplSize = v(cropH * bytesPerLine);
 	var bitplanesData = new Uint8Array(actualBplXportCount * bplSize);
