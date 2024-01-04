@@ -17,7 +17,7 @@
     <b>Disclaimer:</b> Oh boy, I suck at HTML, CSS, JavaScript and frameworks, you've been warned. 
     I chose HTML/javascript for this tool to be able to share with the community, as it's the easiest platform
     to get something to work on Windows, Mac, Linux, etc. Many will prefer command-line tools (and I agree), still it
-     can be useful to have a GUI for some features, such as the color drag'n drop. Still, it works, and several Amiga demos and games
+     can be useful to have a GUI for some features, such as the color drag'n drop. Still, it works, and several demos and games
      used it, so I guess it's worth checking. Have fun!<br><i> - Soundy -</i><br>
     <h3>Video Tutorial</h3>
     You can check this (absolutely not comprehensive) tutorial as an intro:
@@ -84,13 +84,13 @@
 	<br>
     <ul>
         <li>Drag'n drop your source image at the top of the page, in the "drag'n drop an image here" panel</li>
-        <li>The 'Target Platform' combo-box works only for Amiga OCS for the moment. You can ignore it</li>
-        <li>The 'HTML to Platform color conversion' combo-box allows you to choose how the image colors are converted to the OCS palette. Here's the thing: HTML is using 8 bits per component (256 possibilities), while OCS has 4 (16 possibilities). In hexadecimal, means we need to convert a 2 digit numner #xx into a 1 digit number #x</li>
-        <ul>- Clamp Color will just cut the least significant bits (4 bits right shift), so #E9 will become #E for example.</ul>
-        <ul>- Nearest Color will get to the nearest color: #E9 will become #F (because 9 is closer to 16 than to 0, so we round up). #E3 will become #E because 3 is closer to 0. Of course, it means that #FA for example will be remapped to #F as there's no value superior to F. Just try both options, you'll barely notice the difference.</ul>
+        <li>The 'Target Platform' combo-box allows you to choose between Amiga OCS, Atari ST and Atari STE</li>
+        <li>The 'HTML to Platform color conversion' combo-box allows you to choose how the image colors are converted to the Target Platform's palette. Here's the thing: HTML is using 8 bits per component (256 possibilities), while OCS and Atari STe have only 4 bits per component (Atari ST has 3 bits, etc.). There are 2 ways to perform the conversion:</li>
+        <ul>- 'Clamp Color' will just cut the least significant bits, resulting in a slightly darker image.</ul>
+        <ul>- 'Nearest Color' will reach to the nearest color (brighter or darker) depending on the lower bits.</ul>
         <li>Below are the cropping params. By default, the full image is used, but you can work on a sub-section.</li>
         <li>Below are the mask params. Use these only if you want to generate a mask for your image.</li>
-        <li>Below, you'll see the converted image (Cropped, using 12 bits Amiga colors).</li>
+        <li>Below, you'll see the converted image (Cropped, using the Target Platform's colour space).</li>
         <li>Everything you change in this section will reset the other sections (palette will be rebuilt from the pixels selected by the crop)</li>
     </ul>    
 	<br>
@@ -111,10 +111,10 @@
     <hr><h3>The "Bitplane Export" section</h3>
 	<br>
     <ul>
-        <li>Click "Save Bitplanes" to save the RAW bitplanes to a file (classic Amiga image export)</li>
+        <li>Click "Save Bitplanes" to save the RAW bitplanes to a file</li>
             <ul>- The palette is not included.</ul>
-            <ul>- RAW bitplanes are saved one after another, except if you ticked the "Interleave bpl" checkbox. In that case, bitplanes will by saved for each line</ul>
-            <ul>- Untick one of the "bpl" checkboxes to disable export for the given bitplane</ul>
+            <ul>- (OCS only) RAW bitplanes are saved one after another, except if you ticked the "Interleave bpl" checkbox. In that case, bitplanes will by saved for each line</ul>
+            <ul>- (OCS only) Untick one of the "bpl" checkboxes to disable export for the given bitplane</ul>
         <li>Click "Save RGB" to save a 12 bit per pixel image (stored using 16 bits per pixels, so the 4 top bits are empty)</li>
         <li>Click "Save Indexes" to export each pix of the image as its 4bit index into the palette (works only for 16 colors or less images, 2indexes saved per byte)</li>
     </ul>
@@ -124,10 +124,10 @@
         <li><i>export as</i> <b>.asm</b> will write the palette as a list of <i>DC.W</i> values in a .asm file.</li>
         <li><i>export as</i> <b>.bin</b> will write the palette as a list of words in a .bin file. If <b>include color count</b> is ticked, the palette will be preceeded by a 16 bit color count.</li>
         <li><i>export as</i> <b>.c</b> will write the palette as an unsigned short C array in a .c file.</li>
-        <li><i>export as</i> <b>copperlist $180</b> will write the palette as a copperlist starting at $180 within a .asm file.</li>
-        <li><i>export as</i> <b>copperlist $1a0</b> will write the palette as a copperlist starting at $1a0 within a .asm file (useful for sprites).</li>
+        <li><i>export as</i> <b>copperlist $180</b> (OCS only) - will write the palette as a copperlist starting at $180 within a .asm file.</li>
+        <li><i>export as</i> <b>copperlist $1a0</b> (OCS only) - will write the palette as a copperlist starting at $1a0 within a .asm file (useful for sprites).</li>
     </ul>
-    <hr><h3>The "Sprite Export" section</h3>
+    <hr><h3>The "Sprite Export" section (OCS only)</h3>
     <br>
         Most of it is explained above, see <b>Quick Use</b>. Here's some extra info:
         <ul>
@@ -140,7 +140,7 @@
             <li>The <b>skip empty</b> checkbox will avoid saving a Sprite with no data (sprites containing only zeroes will not be exported).</li>
             <li>If your palette contains more than 4 colors (up to 16), attached sprites will be saved. The attached sprites will have the suffix <i>'_attached'</i> in their names</li>
         </ul>    
-    <hr><h3>The "Bob Export" section</h3>
+    <hr><h3>The "Bob Export" section (OCS Only)</h3>
     <br>
     Most of it is explained above, see <b>Quick Use</b>. Here's some extra info:
     <ul>
@@ -150,7 +150,7 @@
         <li>The <b>interlace bitplanes</b> will do what you expect it to do: lines will be exported for every bitplane before going to the next line.</li>
         <li>The <b>skip empty</b> checkbox will avoid saving a Bob with no data (Bobs containing only zeroes will not be exported).</li>
     </ul>    
-    <hr><h3>Grabbed Frames</h3>
+    <hr><h3>Grabbed Frames (OCS Only)</h3>
     <ul>
         <li>When choosing <b>Grab Frame</b>, you see a list of <b>Grabbed Frames</b> appear below the image in the <b>Work Bench</b>. This is useful to group together several images that don't necessarily have the same size. This feature is still a bit limited, not sure people need it so I put less effort on it. Don't hesitate to ask for more (comment on pouet for example).</li>
         <li>When you're done grabbing all your frames, you may export them as Sprites or Bobs.</li>

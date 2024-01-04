@@ -1313,15 +1313,30 @@ function grabToBobs() {
 
 
 function onPlatformChosen() {
-    target_platform = getElem("platform").value;
+    target_platform = getElem('platform').value;
+	sptElem = getElem('saveSprite');
+	bobElem = getElem('saveBobs');
+	OCSOptionsElem = getElem('xportBplOCSOptions');
+	
 	
 	switch(target_platform) {
 		case "target_OCS" :
+			platform_colorBits = 4;
+			sptElem.style.display = 'block';
+			bobElem.style.display = 'block';
+			OCSOptionsElem.style.display = 'block';
+		break;
 		case "target_STE" :
 			platform_colorBits = 4;
+			sptElem.style.display = 'none';
+			bobElem.style.display = 'none';
+			OCSOptionsElem.style.display = 'none';
 		break; 
 		case "target_ST" : 
 			platform_colorBits = 3;
+			sptElem.style.display = 'none';
+			bobElem.style.display = 'none';
+			OCSOptionsElem.style.display = 'none';
 		break;
 		default:
 			setElemValue('platform','target_OCS');

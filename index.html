@@ -115,12 +115,14 @@
                 <center><h3><i>Bitplane Export</i></h3></center>
                 <button type="button" class="fa fa-files-o" onclick="saveBpl();"> Save Bitplanes</button>
                 &nbsp;(classic raw bitplane data)
-                &nbsp;&nbsp;&nbsp;bpl 1&nbsp;<input type="checkbox" id="xport1" name="xport1">
-                &nbsp;&nbsp;&nbsp;bpl 2&nbsp;<input type="checkbox" id="xport2" name="xport2">
-                &nbsp;&nbsp;&nbsp;bpl 3&nbsp;<input type="checkbox" id="xport3" name="xport3">
-                &nbsp;&nbsp;&nbsp;bpl 4&nbsp;<input type="checkbox" id="xport4" name="xport4">
-                &nbsp;&nbsp;&nbsp;bpl 5&nbsp;<input type="checkbox" id="xport5" name="xport5">
-                &nbsp;&nbsp;&nbsp;Interleave&nbsp;<input type="checkbox" id="xportInterleave" name="xportInterleave">
+                <span id="xportBplOCSOptions">
+                  &nbsp;&nbsp;&nbsp;bpl 1&nbsp;<input type="checkbox" id="xport1" name="xport1">
+                  &nbsp;&nbsp;&nbsp;bpl 2&nbsp;<input type="checkbox" id="xport2" name="xport2">
+                  &nbsp;&nbsp;&nbsp;bpl 3&nbsp;<input type="checkbox" id="xport3" name="xport3">
+                  &nbsp;&nbsp;&nbsp;bpl 4&nbsp;<input type="checkbox" id="xport4" name="xport4">
+                  &nbsp;&nbsp;&nbsp;bpl 5&nbsp;<input type="checkbox" id="xport5" name="xport5">                
+                  &nbsp;&nbsp;&nbsp;Interleave&nbsp;<input type="checkbox" id="xportInterleave" name="xportInterleave">
+                </span>
                 <br><br><button type="button" class="fa fa-file-image-o" onclick="saveRaw();"> Save RGB</button>
                 &nbsp;(12 bit RGB stored on 16 bits per pix)
                 <br><br><button type="button" class="fa fa-file-text-o" onclick="save4Bit();"> Save Indexes</button>

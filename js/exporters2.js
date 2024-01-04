@@ -899,14 +899,6 @@ function saveBpl() {
 	switch(target_platform) {
 		case "target_STE" :
 		case "target_ST" : 
-			if (document.getElementById('xport5').checked) {
-				alert("can't save 5 bitplanes on ST / STe");
-				document.getElementById('xport5').checked = false;
-			}
-			if (document.getElementById('xportInterleave').checked) {
-				alert("can't export interleaved bitplanes on ST / STe");
-				document.getElementById('xportInterleave').checked = false;
-			}
 			saveBpl_ST();
 		return;
 		default:
@@ -1056,6 +1048,10 @@ function savePalette(_asText){
 		}
 		else _asText = null;
 		if ((mode === "palCper") || (mode === "palCper2")) {
+			if (target_platform != 'target_OCS') {
+				alert("Palette can be exported to Copperlist only for OCS. Current target platform is: " + target_platform);
+				return;
+			}
 			asCper = ";\tcopperlist for: " + export_fileName + "\n";
 			var d = new Date();
 			asCper += ";\t" +  d.toString() + "\n";
