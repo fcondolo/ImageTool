@@ -1314,9 +1314,13 @@ function grabToBobs() {
 
 function onPlatformChosen() {
     target_platform = getElem('platform').value;
-	sptElem = getElem('saveSprite');
-	bobElem = getElem('saveBobs');
-	OCSOptionsElem = getElem('xportBplOCSOptions');
+	let sptElem = getElem('saveSprite');
+	let bobElem = getElem('saveBobs');
+	let OCSOptionsElem = getElem('xportBplOCSOptions');
+	let workBenchElem = getElem('workBench');
+	let savePSXElem = getElem('savePSX');
+	let saveBplElem = getElem('saveBpl');
+	let savePaletteElem = getElem('savePalette');
 	
 	
 	switch(target_platform) {
@@ -1325,18 +1329,40 @@ function onPlatformChosen() {
 			sptElem.style.display = 'block';
 			bobElem.style.display = 'block';
 			OCSOptionsElem.style.display = 'block';
+			workBenchElem.style.display = 'block';
+			savePSXElem.style.display = 'none';
+			saveBplElem.style.display = 'block';
+			savePaletteElem.style.display = 'block';
 		break;
 		case "target_STE" :
 			platform_colorBits = 4;
 			sptElem.style.display = 'none';
 			bobElem.style.display = 'none';
 			OCSOptionsElem.style.display = 'none';
+			workBenchElem.style.display = 'block';
+			savePSXElem.style.display = 'none';
+			saveBplElem.style.display = 'block';
+			savePaletteElem.style.display = 'block';
 		break; 
 		case "target_ST" : 
 			platform_colorBits = 3;
 			sptElem.style.display = 'none';
 			bobElem.style.display = 'none';
 			OCSOptionsElem.style.display = 'none';
+			workBenchElem.style.display = 'block';
+			savePSXElem.style.display = 'none';
+			saveBplElem.style.display = 'block';
+			savePaletteElem.style.display = 'block';
+		break;
+		case "target_PSX16" :
+			platform_colorBits = 5;
+			sptElem.style.display = 'none';
+			bobElem.style.display = 'none';
+			OCSOptionsElem.style.display = 'none';
+			workBenchElem.style.display = 'none';
+			savePSXElem.style.display = 'block';
+			saveBplElem.style.display = 'none';
+			savePaletteElem.style.display = 'none';
 		break;
 		default:
 			setElemValue('platform','target_OCS');

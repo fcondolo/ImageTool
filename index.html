@@ -19,6 +19,7 @@
     <script type="text/javascript" src="js/Keyboard.js"></script>
     <script type="text/javascript" src="js/viewEdit.js"></script>
     <script type="text/javascript" src="js/exporters2.js"></script>
+    <script type="text/javascript" src="js/PSX.js"></script>
     <script type="text/javascript" src="js/main.js"></script>
 </head>
 <!-- ===================================== END HEADER ===================================== -->
@@ -38,6 +39,7 @@
                     <option value=target_OCS>Amiga OCS</option>
                     <option value=target_STE>Atari STE</option>
                     <option value=target_ST>Atari ST</option>
+                    <option value=target_PSX16>PSX 16bit TIM</option>
                     <option value=target_nothing>--- coming soon ---</option>
                     <option value=target_CPC>Amstrad CPC</option>
                     <option value=target_C64>Commodore 64</option>
@@ -111,6 +113,10 @@
               </center>
               </div>    
               <hr>
+              <div id="savePSX" style='background-color:rgba(200,200,200,0.5);'>
+                <center><h3><i>PSX Export</i></h3></center>
+                <button type="button" class="fa fa-files-o" onclick="savePSX_TIM16();"> Save 16 bits TIM</button>
+            </div>
             <div id="saveBpl" style='background-color:rgba(200,200,200,0.5);'>
                 <center><h3><i>Bitplane Export</i></h3></center>
                 <button type="button" class="fa fa-files-o" onclick="saveBpl();"> Save Bitplanes</button>

@@ -860,6 +860,9 @@ function saveBpl() {
 			maxColCount = 16;
 			wMask = 15;
 		break;
+		case  "target_PSX16" :
+			savePSX_TIM16();
+		return;
 		default:
 		break;
 	}
