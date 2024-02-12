@@ -212,7 +212,7 @@ function savePSX_Write32(_d, _v, _o) {
 		r = v(v(r>>3)&31);
 		g = v(v(g>>3)&31);
 		b = v(v(b>>3)&31);
-		const val = b | (g << 5) | (r << 10);
+		const val = r | (g << 5) | (b << 10);
 		chunkyWrite = savePSX_Write16(data, val, chunkyWrite);
 	}
 	
