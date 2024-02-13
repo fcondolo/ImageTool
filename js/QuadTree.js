@@ -3,8 +3,8 @@ class BitField {
   {
     let t = this;
     t.maxData = 8192;
-    t.data = new Uint32Array(t.maxData);
-    t.curShift = 31;
+    t.data = new Uint8Array(t.maxData);
+    t.curShift = 7;
     t.curIndex = 0;
     t.curVal = 0;
   }
@@ -18,7 +18,7 @@ class BitField {
       t.curShift--;
     } else {
       t.data[t.curIndex++] = t.curVal;
-      t.curShift = 31;      
+      t.curShift = 7;      
       t.curVal = 0;
       if (t.curIndex >= t.maxData) {
         debugger;
@@ -34,7 +34,7 @@ class BitField {
 
   startRead() {
     let t = this;
-    t.curShift = 31;
+    t.curShift = 7;
     t.curIndex = 0;
     t.curVal = 0;
   }
@@ -46,9 +46,28 @@ class BitField {
       t.curShift--;
     } else {
       t.curIndex++;
-      t.curShift = 31;      
+      t.curShift = 7;      
     }
     return v;
+  }
+
+  test() {
+    let t = this;
+    const LEN = 1024;
+    let data = new Uint8Array(LEN);
+    for (let i = 0; i < LEN; i++)
+      data[i] = Math.floor(Math.random() * 1000) & 1;
+    for (let i = 0; i < LEN; i++)
+      t.pushBit(data[i]);
+    t.finishWrite();
+    t.startRead();
+    for (let i = 0; i < LEN; i++) {
+      if (t.popBit() != data[i]) {
+        debugger;
+        alert("failed");
+      }
+    }
+    alert("test OK, " + t.curIndex + " bytes.");
   }
 }
 
@@ -91,9 +110,47 @@ class Cell {
   }
 
   compute(_bitfield) {
-
+    const MIN_CELL_SIZE = 4;
+    let t = this;
+    if ((t.w <= MIN_CELL_SIZE) || (t.h <= MIN_CELL_SIZE)) {
+      _bitfield.pushBit(1);
+      return;
+    }
+    let empty = 0;
+    let full = 0;
+    for (let y = 0; y < t.h; y++) {
+      for (let x = 0; x < t.w; x++) {
+        let ofs = x * 4 + cropW * 4 * y;
+        let r = workImagePixels[ofs++];
+        let g = workImagePixels[ofs++];
+        let b = workImagePixels[ofs];
+        if (r + g + b > 16) full++
+        else empty++; 
+      }  
+    }
+    const threshold = (t.w * t.h) / 1.6; 
+    if (full > threshold){
+      _bitfield.pushBit(1);
+      return;
+    }
+    if (empty > threshold){
+      _bitfield.pushBit(1);
+      return;
+    }
+    _bitfield.pushBit(0);
+    let topLeft = new Cell(t, 0);
+    let bottomLeft = new Cell(t, 1);
+    let topRight = new Cell(t, 2);
+    let bottomRight = new Cell(t, 3);
+    t.children.push(topLeft);
+    t.children.push(bottomLeft);
+    t.children.push(topRight);
+    t.children.push(bottomRight);
+    topLeft.compute(_bitfield);
+    bottomLeft.compute(_bitfield);
+    topRight.compute(_bitfield);
+    bottomRight.compute(_bitfield);
   }
-
 }
 
 class QuadTree {
@@ -110,13 +167,14 @@ class QuadTree {
       t.root.h = cropH;
       t.root.children = [];
       t.root.compute(t.data);
+      t.data.finishWrite();
+      alert("Quadtree done, " + t.data.curIndex + " bytes.");
     }
-  
   }
 
   function saveQuadTree() {
-    //let data = new BitField();
-    //data.test();
+//    let data = new BitField();
+//    data.test();
     let tree = new QuadTree();
   }
 
