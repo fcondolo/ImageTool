@@ -50,33 +50,74 @@ class BitField {
     }
     return v;
   }
-
-  test() {
-    const LEN = 1024;
-    let t = this;
-    let bits = new Uint8Array(LEN);
-    for (let i = 0; i < LEN; i++)
-      bits[i] = Math.floor(Math.random()*1000)&1;
-    for (let i = 0; i < LEN; i++)
-      t.pushBit(bits[i]);
-    t.finishWrite();
-
-    t.startRead();
-    for (let i = 0; i < LEN; i++) {
-      let v = t.popBit();
-      if (v != bits[i]) {
-        debugger;
-        alert("BitField::test failed");
-        return;
-      }
-    }
-    alert("BitField::test succeeded. Array max index: " + t.curIndex);
-  }
 }
 
+class Cell {
+  /*
+  _parent : the parent cell
+  _index : the index in the parent cell (0 = top left, 1 = bottom left, 2 = top right, 3 = bottom right)
+  */
+  constructor(_parent, _index) 
+  {
+    let t = this;
+    if (!t.parent) return;
+    t.parent = _parent;
+    t.children = [];
+    t.index = _index;
+    t.w = _parent.w / 2;
+    t.h = _parent.h / 2;
+    switch (_index) {
+      case 0:
+        t.x = _parent.x;
+        t.y = _parent.y;
+      break;
+      case 1:
+        t.x = _parent.x;
+        t.y = _parent.y + t.h;
+      break;
+      case 2:
+        t.x = _parent.x + t.w;
+        t.y = _parent.y;
+      break;
+      case 3:
+        t.x = _parent.x + t.w;
+        t.y = _parent.y + t.h;
+      break;
+      default:
+        debugger;
+        alert("unsupported index");
+      break;
+    }
+  }
+
+  compute(_bitfield) {
+
+  }
+
+}
+
+class QuadTree {
+    constructor() 
+    {
+      let t = this;
+      t.data = new BitField();
+      t.root = new Cell(null,0);
+      t.root.parent = null;
+      t.root.index = 0;
+      t.root.x = 0;
+      t.root.y = 0;
+      t.root.w = cropW;
+      t.root.h = cropH;
+      t.root.children = [];
+      t.root.compute(t.data);
+    }
+  
+  }
+
   function saveQuadTree() {
-    let data = new BitField();
-    data.test();
+    //let data = new BitField();
+    //data.test();
+    let tree = new QuadTree();
   }
 
  
