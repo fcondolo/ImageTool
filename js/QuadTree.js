@@ -79,12 +79,13 @@ class Cell {
   constructor(_parent, _index) 
   {
     let t = this;
-    if (!t.parent) return;
+    t.MIN_CELL_SIZE = 4;
     t.parent = _parent;
     t.children = [];
     t.index = _index;
-    t.w = _parent.w / 2;
-    t.h = _parent.h / 2;
+    if (!_parent) return;
+    t.w = Math.floor(_parent.w / 2);
+    t.h = Math.floor(_parent.h / 2);
     switch (_index) {
       case 0:
         t.x = _parent.x;
@@ -110,9 +111,8 @@ class Cell {
   }
 
   compute(_bitfield) {
-    const MIN_CELL_SIZE = 4;
     let t = this;
-    if ((t.w <= MIN_CELL_SIZE) || (t.h <= MIN_CELL_SIZE)) {
+    if ((t.w <= t.MIN_CELL_SIZE) || (t.h <= t.MIN_CELL_SIZE)) {
       _bitfield.pushBit(1);
       return;
     }
@@ -120,7 +120,7 @@ class Cell {
     let full = 0;
     for (let y = 0; y < t.h; y++) {
       for (let x = 0; x < t.w; x++) {
-        let ofs = x * 4 + cropW * 4 * y;
+        let ofs = (t.x + x) * 4 + cropW * 4 * (t.y + y);
         let r = workImagePixels[ofs++];
         let g = workImagePixels[ofs++];
         let b = workImagePixels[ofs];
@@ -128,12 +128,12 @@ class Cell {
         else empty++; 
       }  
     }
-    const threshold = (t.w * t.h) / 1.6; 
-    if (full > threshold){
+    const threshold = (t.w * t.h) / 1; 
+    if (full >= threshold){
       _bitfield.pushBit(1);
       return;
     }
-    if (empty > threshold){
+    if (empty >= threshold){
       _bitfield.pushBit(1);
       return;
     }
@@ -142,14 +142,66 @@ class Cell {
     let bottomLeft = new Cell(t, 1);
     let topRight = new Cell(t, 2);
     let bottomRight = new Cell(t, 3);
-    t.children.push(topLeft);
-    t.children.push(bottomLeft);
-    t.children.push(topRight);
-    t.children.push(bottomRight);
     topLeft.compute(_bitfield);
     bottomLeft.compute(_bitfield);
     topRight.compute(_bitfield);
     bottomRight.compute(_bitfield);
+    t.children.push(topLeft);
+    t.children.push(bottomLeft);
+    t.children.push(topRight);
+    t.children.push(bottomRight);
+  }
+
+  addSprite(_x, _y, _w, _h, _pix) {
+    // sprite
+    for (let y = 0; y < _h; y++) {
+      for (let x = 0; x < _w; x++) {
+        let ofs = (_x + x) + (_y + y) * cropW;
+        ofs *= 4;
+        workImagePixels[ofs] = _pix[ofs];
+        workImagePixels[ofs + 1] = _pix[ofs + 1];
+        workImagePixels[ofs + 2] = _pix[ofs + 2];
+      }  
+    }
+
+    // debug contour
+    for (let x = 0; x < _w; x++) {
+      let ofs = (_x + x) + (_y + 0) * cropW;
+      ofs *= 4;
+      workImagePixels[ofs] = 255;
+      workImagePixels[ofs + 1] = 0;
+      workImagePixels[ofs + 2] = 0;
+      ofs = (_x + x) + (_y + _h) * cropW;
+      ofs *= 4;
+      workImagePixels[ofs] = 255;
+      workImagePixels[ofs + 1] = 0;
+      workImagePixels[ofs + 2] = 0;
+    }  
+
+    for (let y = 0; y < _h; y++) {
+      let ofs = (_x + 0) + (_y + y) * cropW;
+      ofs *= 4;
+      workImagePixels[ofs] = 255;
+      workImagePixels[ofs + 1] = 0;
+      workImagePixels[ofs + 2] = 0;
+      ofs = (_x + _w) + (_y + y) * cropW;
+      ofs *= 4;
+      workImagePixels[ofs] = 255;
+      workImagePixels[ofs + 1] = 0;
+      workImagePixels[ofs + 2] = 0;
+    }  
+  }
+
+  replay(_bitfield, _pix) {
+    let t = this;
+    let b = _bitfield.popBit();
+    if (b == 1) {
+      t.addSprite(t.x, t.y, t.w, t.h, _pix);
+      return;
+    }
+    for (let i = 0; i < t.children.length; i++) {
+      t.children[i].replay(_bitfield, _pix);
+    }
   }
 }
 
@@ -168,7 +220,26 @@ class QuadTree {
       t.root.children = [];
       t.root.compute(t.data);
       t.data.finishWrite();
-      alert("Quadtree done, " + t.data.curIndex + " bytes.");
+      console.log("Quadtree done, " + (t.data.curIndex + 1) + " bytes.");
+    }
+
+    replay() {
+      let t = this;
+      // clear image
+      t.pix =  workImagePixels.slice();
+      let ofs = 0;
+      for (let y = 0; y < cropH; y++) {
+        for (let x = 0; x < cropW; x++) {
+          workImagePixels[ofs++] = 0;       
+          workImagePixels[ofs++] = 0;       
+          workImagePixels[ofs++] = 0;       
+          workImagePixels[ofs++] = 255;       
+        }  
+      }
+
+      // rebuild image
+      t.data.startRead();
+      t.root.replay(t.data, t.pix);
     }
   }
 
@@ -176,6 +247,9 @@ class QuadTree {
 //    let data = new BitField();
 //    data.test();
     let tree = new QuadTree();
+    tree.replay();
+   workContext.putImageData(workImageData, 0, 0);
+   buildViewImage(0);
   }
 
  
