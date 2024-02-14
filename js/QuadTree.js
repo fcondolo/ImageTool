@@ -199,9 +199,14 @@ class Cell {
       t.addSprite(t.x, t.y, t.w, t.h, _pix);
       return;
     }
-    for (let i = 0; i < t.children.length; i++) {
-      t.children[i].replay(_bitfield, _pix);
-    }
+    let topLeft = new Cell(t, 0);
+    let bottomLeft = new Cell(t, 1);
+    let topRight = new Cell(t, 2);
+    let bottomRight = new Cell(t, 3);
+    topLeft.replay(_bitfield, _pix);
+    bottomLeft.replay(_bitfield, _pix);
+    topRight.replay(_bitfield, _pix);
+    bottomRight.replay(_bitfield, _pix);
   }
 }
 
@@ -239,6 +244,7 @@ class QuadTree {
 
       // rebuild image
       t.data.startRead();
+      t.root.children = [];
       t.root.replay(t.data, t.pix);
     }
   }
