@@ -1,3 +1,5 @@
+var QUAD_DRAWNSPRT = 0;
+
 class BitField {
   constructor() 
   {
@@ -84,8 +86,8 @@ class Cell {
     t.children = [];
     t.index = _index;
     if (!_parent) return;
-    t.w = Math.floor(_parent.w / 2);
-    t.h = Math.floor(_parent.h / 2);
+    t.w = Math.floor((_parent.w + 1) / 2);
+    t.h = Math.floor((_parent.h + 1) / 2);
     switch (_index) {
       case 0:
         t.x = _parent.x;
@@ -112,10 +114,6 @@ class Cell {
 
   compute(_bitfield) {
     let t = this;
-    if ((t.w <= t.MIN_CELL_SIZE) || (t.h <= t.MIN_CELL_SIZE)) {
-      _bitfield.pushBit(1);
-      return;
-    }
     let empty = 0;
     let full = 0;
     for (let y = 0; y < t.h; y++) {
@@ -128,13 +126,23 @@ class Cell {
         else empty++; 
       }  
     }
+    if ((t.w <= t.MIN_CELL_SIZE) || (t.h <= t.MIN_CELL_SIZE)) {
+      _bitfield.pushBit(1);
+      if (empty == t.w * t.h)
+        _bitfield.pushBit(0);
+      else
+        _bitfield.pushBit(1);
+      return;
+    }
     const threshold = (t.w * t.h) / 1; 
     if (full >= threshold){
+      _bitfield.pushBit(1);
       _bitfield.pushBit(1);
       return;
     }
     if (empty >= threshold){
       _bitfield.pushBit(1);
+      _bitfield.pushBit(0);
       return;
     }
     _bitfield.pushBit(0);
@@ -153,17 +161,22 @@ class Cell {
   }
 
   addSprite(_x, _y, _w, _h, _pix) {
+    QUAD_DRAWNSPRT++;
     // sprite
+    if (_x % 2 != 0) { _x--; _w++;}
+    if (_y % 2 != 0) { _y--; _h++;}
+    if (_w % 2 != 0) _w++;
+    if (_h % 2 != 0) _h++;
     for (let y = 0; y < _h; y++) {
       for (let x = 0; x < _w; x++) {
         let ofs = (_x + x) + (_y + y) * cropW;
         ofs *= 4;
-        workImagePixels[ofs] = _pix[ofs];
-        workImagePixels[ofs + 1] = _pix[ofs + 1];
-        workImagePixels[ofs + 2] = _pix[ofs + 2];
+        workImagePixels[ofs] = 255;//_pix[ofs];
+        workImagePixels[ofs + 1] = 255;//_pix[ofs + 1];
+        workImagePixels[ofs + 2] = 255;//_pix[ofs + 2];
       }  
     }
-
+/*
     // debug contour
     for (let x = 0; x < _w; x++) {
       let ofs = (_x + x) + (_y + 0) * cropW;
@@ -189,16 +202,19 @@ class Cell {
       workImagePixels[ofs] = 255;
       workImagePixels[ofs + 1] = 0;
       workImagePixels[ofs + 2] = 0;
-    }  
+    }  */
   }
 
   replay(_bitfield, _pix) {
     let t = this;
     let b = _bitfield.popBit();
-    if (b == 1) {
-      t.addSprite(t.x, t.y, t.w, t.h, _pix);
+    if (b == 1) { // cell is not subdivided
+      b = _bitfield.popBit();
+      if (b == 1) // is not 100% empty cell
+        t.addSprite(t.x, t.y, t.w, t.h, _pix);
       return;
     }
+    // cell is subdivided
     let topLeft = new Cell(t, 0);
     let bottomLeft = new Cell(t, 1);
     let topRight = new Cell(t, 2);
@@ -253,8 +269,24 @@ class QuadTree {
 //    let data = new BitField();
 //    data.test();
     let tree = new QuadTree();
+
+    var d = new Date();
+    let s = "\t// quadtree for: " + export_fileName;
+    s += "\t\n // " + d.toString() + "\n";
+    s += "\tstatic unsigned char quadTreeBits[" + (tree.data.curIndex + 1) + "] = {";
+    for (let i = 0; i < tree.data.curIndex; i++) {
+      s += tree.data.data[i];
+      if (i < tree.data.curIndex - 1) s+= ", ";
+      else s += "};\n";
+    }
+    navigator.clipboard.writeText(s);
+
+    QUAD_DRAWNSPRT  = 0;
     tree.replay();
-   workContext.putImageData(workImageData, 0, 0);
+    console.log("drawn " + QUAD_DRAWNSPRT + " sprites");
+
+
+    workContext.putImageData(workImageData, 0, 0);
    buildViewImage(0);
   }
 
