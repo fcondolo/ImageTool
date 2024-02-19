@@ -122,7 +122,7 @@ class Cell {
         let r = workImagePixels[ofs++];
         let g = workImagePixels[ofs++];
         let b = workImagePixels[ofs];
-        if (r + g + b > 16) full++
+        if (r + g + b > 0) full++
         else empty++; 
       }  
     }
@@ -176,7 +176,7 @@ class Cell {
         workImagePixels[ofs + 2] = 255;//_pix[ofs + 2];
       }  
     }
-/*
+
     // debug contour
     for (let x = 0; x < _w; x++) {
       let ofs = (_x + x) + (_y + 0) * cropW;
@@ -202,7 +202,7 @@ class Cell {
       workImagePixels[ofs] = 255;
       workImagePixels[ofs + 1] = 0;
       workImagePixels[ofs + 2] = 0;
-    }  */
+    }  
   }
 
   replay(_bitfield, _pix) {
@@ -274,9 +274,9 @@ class QuadTree {
     let s = "\t// quadtree for: " + export_fileName;
     s += "\t\n // " + d.toString() + "\n";
     s += "\tstatic unsigned char quadTreeBits[" + (tree.data.curIndex + 1) + "] = {";
-    for (let i = 0; i < tree.data.curIndex; i++) {
+    for (let i = 0; i <= tree.data.curIndex; i++) {
       s += tree.data.data[i];
-      if (i < tree.data.curIndex - 1) s+= ", ";
+      if (i < tree.data.curIndex) s+= ", ";
       else s += "};\n";
     }
     navigator.clipboard.writeText(s);
