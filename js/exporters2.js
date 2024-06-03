@@ -704,12 +704,38 @@ function saveBpl_ST() {
 	// Bitplane definition: https://www.fxjavadevblog.fr/atari-st-4-bitplanes/
 	// Bitplane Simulator: https://www.fxjavadevblog.fr/atari-st-4-bitplanes-simulator/
 
+	let pi1 = document.getElementById('pi1').checked;
 	const bytesPerLine = v(cropW/2);
-	const imgSize = v(cropH * bytesPerLine);
+	let imgSize = v(cropH * bytesPerLine);
+	if (pi1) imgSize += 34;
 	let bitplanesData = new Uint8Array(imgSize);
 	bitplanesData.fill(0);
-
 	var writeIndex = 0;
+	bitplanesData[writeIndex++] = 0;	// resolution = low-res
+	bitplanesData[writeIndex++] = 0;	// resolution = low-res
+	const remainingBits = 8 - platform_colorBits;
+	const maxVal = (1 << platform_colorBits) - 1;
+	for (let i = 0; i < 16; i++) {
+		var r = nearest(global_palette[i].r);
+		var g = nearest(global_palette[i].g);
+		var b = nearest(global_palette[i].b);
+		var ar = v(v(r>>remainingBits)&maxVal);
+		var ag = v(v(g>>remainingBits)&maxVal);
+		var ab = v(v(b>>remainingBits)&maxVal);
+							
+		switch(target_platform) {
+			case "target_STE" :
+				ar = componentToSTE(ar);
+				ag = componentToSTE(ag);
+				ab = componentToSTE(ab);
+			break;
+			default:
+			break;
+		}
+			
+		bitplanesData[writeIndex++] = v(ar);
+		bitplanesData[writeIndex++] = v(ab | (ag << 4));
+	}
 
 	for (var y = 0; y < cropH; y++)
 	{

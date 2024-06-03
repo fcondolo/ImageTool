@@ -1321,6 +1321,7 @@ function onPlatformChosen() {
 	let savePSXElem = getElem('savePSX');
 	let saveBplElem = getElem('saveBpl');
 	let savePaletteElem = getElem('savePalette');
+	let pi1Elem = getElem('pi1Span');
 	
 	
 	switch(target_platform) {
@@ -1333,6 +1334,7 @@ function onPlatformChosen() {
 			savePSXElem.style.display = 'none';
 			saveBplElem.style.display = 'block';
 			savePaletteElem.style.display = 'block';
+			pi1Elem.style.display = 'none';
 		break;
 		case "target_STE" :
 			platform_colorBits = 4;
@@ -1343,6 +1345,7 @@ function onPlatformChosen() {
 			savePSXElem.style.display = 'none';
 			saveBplElem.style.display = 'block';
 			savePaletteElem.style.display = 'block';
+			pi1Elem.style.display = 'block';
 		break; 
 		case "target_ST" : 
 			platform_colorBits = 3;
@@ -1353,6 +1356,7 @@ function onPlatformChosen() {
 			savePSXElem.style.display = 'none';
 			saveBplElem.style.display = 'block';
 			savePaletteElem.style.display = 'block';
+			pi1Elem.style.display = 'block';
 		break;
 		case "target_PSX16" :
 			platform_colorBits = 5;
@@ -1363,6 +1367,7 @@ function onPlatformChosen() {
 			savePSXElem.style.display = 'block';
 			saveBplElem.style.display = 'none';
 			savePaletteElem.style.display = 'none';
+			pi1Elem.style.display = 'none';
 		break;
 		default:
 			setElemValue('platform','target_OCS');
