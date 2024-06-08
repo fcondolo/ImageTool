@@ -213,7 +213,7 @@ function onLoad() {
 	var dropZone = getElem('refImg');
 	dropZone.addEventListener('dragover', handleDragOver, false);
 	dropZone.addEventListener('drop', handleFileSelect, false);
-	
+	onPlatformChosen();
 	window.requestAnimationFrame(viewShow_step);
 }
 

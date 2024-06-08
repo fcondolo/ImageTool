@@ -711,30 +711,38 @@ function saveBpl_ST() {
 	let bitplanesData = new Uint8Array(imgSize);
 	bitplanesData.fill(0);
 	var writeIndex = 0;
-	bitplanesData[writeIndex++] = 0;	// resolution = low-res
-	bitplanesData[writeIndex++] = 0;	// resolution = low-res
-	const remainingBits = 8 - platform_colorBits;
-	const maxVal = (1 << platform_colorBits) - 1;
-	for (let i = 0; i < 16; i++) {
-		var r = nearest(global_palette[i].r);
-		var g = nearest(global_palette[i].g);
-		var b = nearest(global_palette[i].b);
-		var ar = v(v(r>>remainingBits)&maxVal);
-		var ag = v(v(g>>remainingBits)&maxVal);
-		var ab = v(v(b>>remainingBits)&maxVal);
-							
-		switch(target_platform) {
-			case "target_STE" :
-				ar = componentToSTE(ar);
-				ag = componentToSTE(ag);
-				ab = componentToSTE(ab);
-			break;
-			default:
-			break;
+	if (pi1) {
+		bitplanesData[writeIndex++] = 0;	// resolution = low-res
+		bitplanesData[writeIndex++] = 0;	// resolution = low-res	
+
+		const remainingBits = 8 - platform_colorBits;
+		const maxVal = (1 << platform_colorBits) - 1;
+		for (let i = 0; i < 16; i++) {
+			var r = 0;
+			var g = 0;
+			var b = 0;
+			if (global_palette.length > i) {	// some pics can be 8 colors
+				r = nearest(global_palette[i].r);
+				g = nearest(global_palette[i].g);
+				b = nearest(global_palette[i].b);	
+			}
+			var ar = v(v(r>>remainingBits)&maxVal);
+			var ag = v(v(g>>remainingBits)&maxVal);
+			var ab = v(v(b>>remainingBits)&maxVal);
+								
+			switch(target_platform) {
+				case "target_STE" :
+					ar = componentToSTE(ar);
+					ag = componentToSTE(ag);
+					ab = componentToSTE(ab);
+				break;
+				default:
+				break;
+			}
+				
+			bitplanesData[writeIndex++] = v(ar);
+			bitplanesData[writeIndex++] = v(ab | (ag << 4));
 		}
-			
-		bitplanesData[writeIndex++] = v(ar);
-		bitplanesData[writeIndex++] = v(ab | (ag << 4));
 	}
 
 	for (var y = 0; y < cropH; y++)
@@ -872,7 +880,11 @@ function saveBpl_ST() {
 		}
 	}
 	var blob = new Blob([bitplanesData], {type: "application/octet-stream"});
-	var fileName = export_fileName + "_bitplanes.bin";
+	var fileName = export_fileName;
+	if (pi1) 
+		fileName += ".pi1";
+	else
+		fileName += "_bitplanes.bin";
 	saveAs(blob, fileName);
   }
 
