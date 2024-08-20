@@ -1949,16 +1949,16 @@ function remapPaletteFromPng(_bin) {
 	let reader = new PNGRead(_bin);
 	if (reader.OK) {
 		let index = 0;
-	//	let shift = 8 - reader.Bit;
+		let shift = 8 - reader.Bit;
 		while (index < reader.pal.length) {
 			let r = v(reader.pal[index++]);
 			let g = v(reader.pal[index++]);
 			let b = v(reader.pal[index++]);
-	/*		if (shift  > 0) {
+			if (shift  > 0) {
 				r <<= shift;
 				g <<= shift;
 				b <<= shift;
-			}*/
+			}
 			global_palette.push({r:r,g:g,b:b});	
 		}
 	}
