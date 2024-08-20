@@ -21,6 +21,7 @@
     <script type="text/javascript" src="js/exporters2.js"></script>
     <script type="text/javascript" src="js/PSX.js"></script>
     <script type="text/javascript" src="js/quadTree.js"></script>
+    <script type="text/javascript" src="js/PNGRead.js"></script>
     <script type="text/javascript" src="js/main.js"></script>
 </head>
 <!-- ===================================== END HEADER ===================================== -->
@@ -75,6 +76,7 @@
                 <br>lock color 0&nbsp;<input type="checkbox" id="lockclr0" name="lockclr0" onchange="onLockCol0()"></br>
                 <br><button onclick="importPalette()">Import</button>
                 &nbsp;from:&nbsp;<select id="loadpalettefrom">
+                  <option value=loadpalettefrom_png>.png (file)</option>
                   <option value=loadpalettefrom_binary>.bin (file)</option>
                   <option value=loadpalettefrom_asm>.asm (file)</option>
                   <option value=loadpalettefrom_clip>.asm (clipboard)</option>

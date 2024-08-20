@@ -691,7 +691,7 @@ function TwoCharStringHEX(i) {
 		case 13 : ret += "d"; break;
 		case 14 : ret += "e"; break;
 		case 15 : ret += "f"; break;
-		default : alert("color value error"); ret += "0"; break;
+		default : debugger; alert("color value error"); ret += "0"; break;
 	}
 	var lo = Math.floor(i&15);
 	switch(lo){
@@ -711,7 +711,7 @@ function TwoCharStringHEX(i) {
 		case 13 : ret += "d"; break;
 		case 14 : ret += "e"; break;
 		case 15 : ret += "f"; break;
-		default : alert("color value error"); ret += "0"; break;
+		default : debugger; alert("color value error"); ret += "0"; break;
 	}
     return ret;
 }
@@ -736,7 +736,7 @@ function ThreeCharStringHEX(i) {
 		case 13 : ret += "d"; break;
 		case 14 : ret += "e"; break;
 		case 15 : ret += "f"; break;
-		default : alert("color value error"); ret += "0"; break;
+		default : debugger; alert("color value error"); ret += "0"; break;
 	}
 	var hi = Math.floor(i / 16);
 	switch(hi){
@@ -756,7 +756,7 @@ function ThreeCharStringHEX(i) {
 		case 13 : ret += "d"; break;
 		case 14 : ret += "e"; break;
 		case 15 : ret += "f"; break;
-		default : alert("color value error"); ret += "0"; break;
+		default : debugger; alert("color value error"); ret += "0"; break;
 	}
 	var lo = Math.floor(i&15);
 	switch(lo){
@@ -776,7 +776,7 @@ function ThreeCharStringHEX(i) {
 		case 13 : ret += "d"; break;
 		case 14 : ret += "e"; break;
 		case 15 : ret += "f"; break;
-		default : alert("color value error"); ret += "0"; break;
+		default : debugger; alert("color value error"); ret += "0"; break;
 	}
     return ret;
 }
@@ -1775,7 +1775,23 @@ function OCSOnly(_msg) {
 function importPalette() {
 	if (!OCSOnly("palette import")) return;
 	var mode = getElemValue('loadpalettefrom');
-	if (mode === 'loadpalettefrom_binary') {
+	if (mode === 'loadpalettefrom_png') {
+		let input = document.createElement('input');
+		input.type = 'file';
+		input.onchange = _ => {
+				  let files =   Array.from(input.files);
+				  fileData = new Blob([files[0]]);
+				  // Pass getBuffer to promise.
+				  var promise = new Promise(getBuffer(fileData));
+				  // Wait for promise to be resolved, or log error.
+				  promise.then(function(data) {
+					remapPaletteFromPng(data);
+				  }).catch(function(err) {
+					console.log('Error: ',err);
+				  });
+		};
+		input.click();	
+	} else if (mode === 'loadpalettefrom_binary') {
 		let input = document.createElement('input');
 		input.type = 'file';
 		input.onchange = _ => {
@@ -1926,6 +1942,30 @@ function remapPaletteFromText(_text) {
 	postPaletteUpdate();
 }
 
+
+function remapPaletteFromPng(_bin) {
+	var index = 0;
+	global_palette = [];
+	let reader = new PNGRead(_bin);
+	if (reader.OK) {
+		let index = 0;
+		let shift = 8 - reader.Bit;
+		while (index < reader.pal.length) {
+			let r = v(reader.pal[index++]);
+			let g = v(reader.pal[index++]);
+			let b = v(reader.pal[index++]);
+			if (shift  > 0) {
+				r <<= shift;
+				g <<= shift;
+				b <<= shift;
+			}
+			global_palette.push({r:r,g:g,b:b});	
+		}
+	}
+
+	postPaletteUpdate();
+}
+
 function remapPaletteFromBin(_bin) {
 	var index = 0;
 	global_palette = [];
@@ -1939,7 +1979,6 @@ function remapPaletteFromBin(_bin) {
 
 	postPaletteUpdate();
 }
-
 
 function postPaletteUpdate() {
 	pixelsPaletteIndex = new Uint8Array(cropW * cropH);
