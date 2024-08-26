@@ -1,0 +1,87 @@
+﻿<!DOCTYPE html>
+<html><head>
+<title>Bitmap Image Tool</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content="" />
+<meta name="copyright" content="" />
+
+<link rel="stylesheet" type="text/css" href="css/kickstart.css" media="all" />                  <!-- KICKSTART -->
+<link rel="stylesheet" type="text/css" href="style.css" media="all" />                          <!-- CUSTOM STYLES -->
+	
+<!-- ===================================== END HEADER ===================================== -->
+
+
+<div class="grid">
+    <br><center><form action="index.html"><input type="submit" value="Back"/></form></center></head><br>
+    <iframe width="905" height="509" src="https://www.youtube.com/embed/kxAeN02R8xc?si=e6Hn-djs534BwGqL" title="Image Exporter - Atari" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>        
+    </iframe>
+    <h3>Quick Use</h3>
+    <br><b>Exporting an image to bitplanes:</b>
+    <ul>
+        <li>Drag'n drop your source image at the top of the page, in the "drag'n drop an image here" panel</li>
+        <li>Below the image, you'll fint a "Target Platform" combo box. Choose ST or STe.</li>
+        <li>Go to the <b>Bitplane Export</b> section at the bottom of the page</li>
+        <li>Click <b>Save Bitplanes</b></li>
+    </ul>    
+    <br>...and you're done with the <b>Quick Use</b> section, have fun or stay tuned for further details...
+	<br>
+    <hr><h3>The "Image" Section</h3>
+	<br>
+    <ul>
+        <li>Drag'n drop your source image at the top of the page, in the "drag'n drop an image here" panel</li>
+        <li>The 'Target' combo-box allows you to choose your favorite machine</li>
+        <li>The 'Color' combo-box allows you to choose how the image colors are converted to the Target Platform's palette. Here's the thing: HTML is using 8 bits per component (256 possibilities for R,G,B), while STe has only 4 bits per component, and ST has 3 bits. There are 2 ways to perform the conversion:</li>
+        <ul>- 'Clamp Color' will just cut the least significant bits, resulting in a potentially slightly darker image.</ul>
+        <ul>- 'Nearest Color' will reach to the nearest color (brighter or darker) depending on the lower bits.</ul>
+        <li>Then come the cropping params. By default, the full image is used, but you can work on a sub-section.</li>
+        <li>Then come the mask params. Use these only if you want to generate a mask for your image.</li>
+        <li>Below, you'll see the converted image (Cropped, using the Target Platform's colour space).</li>
+        <li>Everything you change in this section will reset the other sections (palette will be rebuilt from the pixels selected by the crop)</li>
+    </ul>    
+	<br>
+    <hr><h3>The "WorkBench" section</h3>
+	<br>
+    <ul>
+        <li>The left part of this section contains your palette:</li>
+        <ul>- Drag'n drop color entries to change their index in the palettte.</ul>
+        <ul>- Click on a color to change its RGB values.</ul>
+        <ul>- Two buttons allow you to sort the palette by ascending or descending luminosity. Luminosity is calculated using the standard formula: 0.2126 * R + 0.7152 * G + 0.0722 * B</ul>
+        <ul>- A button allows you to load a previously saved palette (or from a PNG file)</ul>
+        <ul>- The "lock color 0" checkbox makes sure no pixel is assigned palette index 0. Not really useful on Atari ST</ul>
+        <li>The right part of this section contains the image:</li>
+        <ul>- Sliders allow you to play with zoom and color cycling (no consequence on the image, just for editor visualization)</ul>
+    </ul>    
+    <hr><h3>The "Export" section</h3>
+	<br>
+    <hr><h4>Bitplanes Export</h4>
+    <ul>
+        <li>Click "Save Bitplanes" to save the RAW bitplanes to a file. Palette is not included</li>
+        <li>Click "Save RGB" to save a 12 bit per pixel image (stored using 16 bits per pixels, so the 4 top bits are empty)</li>
+        <li>Click "Save Indexes" to export each pix of the image as its 4bit index into the palette (works only for 16 colors or less images, 2indexes saved per byte)</li>
+    </ul>
+    <hr><h4>Palette Export</h4>
+    <ul>
+        <li>The palette export options are pretty self-explanatory</li>
+        <li><i>export as</i> <b>.asm</b> will write the palette as a list of <i>DC.W</i> values in a .asm file.</li>
+        <li><i>export as</i> <b>.bin</b> will write the palette as a list of words in a .bin file. If <b>include color count</b> is ticked, the palette will be preceeded by a 16 bit color count.</li>
+        <li><i>export as</i> <b>.c</b> will write the palette as an unsigned short C array in a .c file.</li>
+    </ul>
+    <hr><h3>Questions / Requests</h3>
+    <ul>
+        <li>Send an email at <b>soundydeadliners at gmail.com</b></li>
+        <li><a href="https://www.pouet.net/prod.php?which=90167">Leave a comment on Pouet</a></li>
+    </ul>
+	<br>
+    <br><center><form action="index.html"><input type="submit" value="Back"/></form></center></head><br>
+        
+</div><!-- END GRID -->
+
+<!-- ===================================== START FOOTER ===================================== -->
+<div class="clear"></div>
+<div id="footer">
+    <img src="data/logo.png">
+    <br>All bugs by Soundy - soundydeadliners at gmail.com
+</div>
+
+</body></html>

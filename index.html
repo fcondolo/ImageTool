@@ -28,48 +28,62 @@
 
 
       <body onload="onLoad()" onkeydown="keyDown(event)" onkeyup="keyUp(event)">
-          <center><h3><i>Original Image</i></h3></center>
               <center>
-                  <form action="help.html"><input type="submit" value="Help Page" /></form>
-                  <br><a href="https://www.pouet.net/prod.php?which=90167">Leave a comment on Pouet!</a>
+                <br><img src="data/AmigaIcon.png" width="2%">&nbsp; <a href=help.html>Amiga help page</a>
+                &nbsp;&nbsp;&nbsp;&nbsp;<img src="data/AtariIcon.png" width="2%">&nbsp; <a href=help-st.html>Atari help page</a>
+                <br>
+                <br><a href="https://www.pouet.net/prod.php?which=90167">Leave a comment on Pouet!</a>
                   <br>
+                  <hr><center><h3 style='background-color:rgba(200,200,200,0.5);'>Image Section</h3></center>
+                  <h4><i>Source Image</i></h4>
                   <img id='refImg' src="data/refImg.png">
                   <br><input type="file" id="file-input"/>
-                  <br /><br />            
-                  Target Platform:
-                  <select id="platform"onchange="onPlatformChosen()">
-                    <option value=target_OCS>Amiga OCS</option>
-                    <option value=target_STE>Atari STE</option>
-                    <option value=target_ST>Atari ST</option>
-                    <option value=target_PSX16>PSX 16bit TIM</option>
-                    <option value=target_nothing>--- coming soon ---</option>
-                    <option value=target_CPC>Amstrad CPC</option>
-                    <option value=target_C64>Commodore 64</option>
-                  </select>
-                  <br>
-                  HTML to Platform color conversion:
-                  <select id="conversionAlgo" onchange="onDrop()">
-                    <option value=clampColor selected="selected">Clamp Color</option>
-                    <option value=nearestColor>Nearest Color</option>
-                  </select>
                   <br /><br />
-                  &nbsp;&nbsp;&nbsp;Crop X&nbsp;<input type="text" id="cropX" name="cropX" onchange="onCrop()" size="8">
-                  &nbsp;&nbsp;&nbsp;Crop Y&nbsp;<input type="text" id="cropY" name="cropY" onchange="onCrop()" size="8">
-                  <br>&nbsp;&nbsp;&nbsp;Crop W&nbsp;<input type="text" id="cropW" name="cropW" onchange="onCrop()" size="8">
-                  &nbsp;&nbsp;&nbsp;Crop H&nbsp;<input type="text" id="cropH" name="cropH" onchange="onCrop()" size="8">
-                  <br><button type="button" class="fa fa-scissors" onclick="onDoCrop()"> Crop</button>
-                  <br>&nbsp;&nbsp;&nbsp;Mask first color index&nbsp;<input type="text" id="beginMsk" name="beginMsk" size="6">
-                  &nbsp;&nbsp;&nbsp;Mask last color index&nbsp;<input type="text" id="endMsk" name="endMsk" size="6">
-                  <button type="button" class="fa fa-space-shuttle" onclick="onMask()"> Mask</button>
-                  <br>
-                  <button type="button" class="fa fa-magic" onclick="onDrop()"> Reset</button>
-                  <br>
+                  <div class="col_12">
+                    <div class="col_4">
+                      <b>CONVERSION</b><br>
+                      Target:
+                      <select id="platform"onchange="onPlatformChosen()">
+                        <option value=target_OCS>Amiga OCS</option>
+                        <option value=target_STE>Atari STE</option>
+                        <option value=target_ST>Atari ST</option>
+                        <option value=target_PSX16>PSX 16bit TIM</option>
+                      </select>
+                      <br>
+                      Color:
+                      <select id="conversionAlgo" onchange="onDrop()">
+                        <option value=clampColor selected="selected">Clamp</option>
+                        <option value=nearestColor>Nearest</option>
+                      </select>
+                      <br /><br />
+                    </div>
+                    <div class="col_4">
+                      <b>CROP</b><br>
+                      &nbsp;&nbsp;&nbsp;X&nbsp;<input type="text" id="cropX" name="cropX" onchange="onCrop()" size="3">
+                      &nbsp;&nbsp;&nbsp;Y&nbsp;<input type="text" id="cropY" name="cropY" onchange="onCrop()" size="3">
+                      <br>&nbsp;&nbsp;&nbsp;W&nbsp;<input type="text" id="cropW" name="cropW" onchange="onCrop()" size="3">
+                      &nbsp;&nbsp;&nbsp;H&nbsp;<input type="text" id="cropH" name="cropH" onchange="onCrop()" size="3">
+                      <br><button type="button" class="fa fa-scissors" onclick="onDoCrop()"> Crop</button>
+                    </div>
+                    <div class="col_4">
+                      <b>MASK</b><br>
+                      &nbsp;&nbsp;&nbsp;first index&nbsp;<input type="text" id="beginMsk" name="beginMsk" size="6">
+                      <br>last index&nbsp;<input type="text" id="endMsk" name="endMsk" size="6">
+                      <br><button type="button" class="fa fa-space-shuttle" onclick="onMask()"> Mask</button>
+                      <br>
+                  <!--    <button type="button" class="fa fa-magic" onclick="onDrop()"> Reset</button> -->
+                      <br>
+                    </div>
+                    </div><br>
+                  <div class="col_12">
+                  <h4><i>Work Image</i></h4>
                   <canvas id='workCanvas'></canvas>
+                  </div>
               </center>
-              <hr>
+              
 
 
-              <center><h3><i>Work Bench</i></h3></center>
+              <hr><center><h3 style='background-color:rgba(200,200,200,0.5);'>Workbench Section</h3></center>
               <div id="workBench" class="col_3" style='background-color:rgba(0,0,0,0);'>
                 <br><button type="button" class="fa fa-arrow-circle-up" onclick="pal_ascending();"> Ascending</button>
                 <button type="button" class="fa fa-arrow-circle-down" onclick="pal_descending();"> Descending</button><br>
@@ -84,10 +98,10 @@
                 <div id='paletteColors' style='background-color:rgba(200,200,200,0.5);'>
                 </div>
               </div>
-              <div class="col_9" style='background-color:rgba(0,0,0,0);'>
+              <div id="wb2" class="col_9" style='background-color:rgba(0,0,0,0);'>
                 Zoom&nbsp;<input type="range" min="1" max="8" value="2" class="slider" id="zoom" oninput="buildViewImage()">
                 &nbsp;&nbsp;&nbsp;<span for="colorcycle">Color Cycle: </span><input type="range" min="0" max="511" value="1" class="slider" id="colorcycle" oninput="doColorCycle()" onmousedown="startColorCycle()" ontouchstart="startColorCycle()" onmouseup="endColorCycle()" ontouchend="endColorCycle()"  onfocusout="endColorCycle()">
-                <br>show:&nbsp;<select id="viewShow" onchange="buildViewImage()">
+                <span id="viewshow_grab">show:&nbsp;<select id="viewShow" onchange="buildViewImage()">
                   <option value=viewShow_normal>normal</option>
                   <option value=viewShow_sprites>sprites</option>
                   <option value=viewShow_bobs>bobs</option>
@@ -100,12 +114,13 @@
                     <option value=grabmode_8px>grab 8px</option>
                     <option value=grabmode_16px>grab 16px</option>
                     <option value=grabmode_32px>grab 32px</option>
-                </select>
+                </select></span>
                 <!-- <button type="button" onclick="popView()">Back</button><br> -->
                 <br><canvas id='viewCanvas' type="overflow:scroll;"></canvas>
               </div>
-              <div id="frames" class="col_9" style='background-color:rgba(200,200,200,0.5);'>
-                <center><h3>Grabbed Frames</h3><br>
+              <hr><center><h3 style='background-color:rgba(200,200,200,0.5);'>Export Section</h3></center>
+              <div id="frames" class="col_9" style='background-color:rgba(200,200,200,0.2);'>
+                <h4>Grabbed Frames</h4><br>
                 <canvas id='framesCanvas'></canvas>
                 <br><span id="curFrameLabel"></span>
                 <br><button type="button" class="fa fa-arrow-circle-o-left" onclick="prevFrame();"></button>
@@ -116,14 +131,14 @@
               </center>
               </div>    
               <hr>
-              <div id="savePSX" style='background-color:rgba(200,200,200,0.5);'>
-                <center><h3><i>PSX Export</i></h3></center>
+              <div id="savePSX" style='background-color:rgba(200,200,200,0.2);'>
+                <center><h4><i>PSX Export</i></h4></center>
                 <button type="button" class="fa fa-files-o" onclick="savePSX_TIM16();"> Save 16 bits TIM</button>
                 <button type="button" class="fa fa-files-o" onclick="savePSX_TIM4();"> Save 4 bits TIM</button>
                 <button type="button" class="fa fa-files-o" onclick="saveQuadTree();"> Save QuadTree</button>
             </div>
-            <div id="saveBpl" style='background-color:rgba(200,200,200,0.5);'>
-                <center><h3><i>Bitplane Export</i></h3></center>
+            <div id="saveBpl" style='background-color:rgba(200,200,200,0.2);'>
+                <center><h4><i>Bitplane Export</i></h4></center>
                 <button type="button" class="fa fa-files-o" onclick="saveBpl();"> Save Bitplanes</button>
                 &nbsp;(classic raw bitplane data)
                 <span id="pi1Span">Export as Degas pi1<input type="checkbox" id="pi1" name="pi1"></span>
@@ -140,10 +155,9 @@
                 <br><br><button type="button" class="fa fa-file-text-o" onclick="save4Bit();"> Save Indexes</button>
                 &nbsp;(4 bits per pix palette index, so 1 byte is 2 pix, 16 colors max)
             </div>
-            <div id="savePalette" style='background-color:rgba(200,200,200,0.5);'>
-              <center><h3><i>Palette Export</i></h3>
+            <div id="savePalette" style='background-color:rgba(200,200,200,0.2);'>
+            <center><h4><i>Palette Export</i></h4></center>
                 <button type="button" class="fa fa-floppy-o" onclick="savePalette('@fromeditor');"> Save</button>
-              </center>
                   export as: <select id="paletteMode" onchange="onPalExportMode()">
                     <option value=palASM>.asm</option>
                     <option value=paltBin>.bin</option>
@@ -157,12 +171,10 @@
                 </select>
                 <br><br>Include color count&nbsp;<input type="checkbox" id="includeCount" name="includeCount">
             </div>                    
-            <div id="saveSprite" style='background-color:rgba(200,200,200,0.5);'>
-              <center>
-                <h3><i>Sprite Export</i></h3>
+            <div id="saveSprite" style='background-color:rgba(200,200,200,0.2);'>
+            <center><h4><i>Sprite Export</i></h4></center>
                 <br><button type="button" id="previewSprtBut" class="fa fa-search" onclick="previewSprites(false);"> Preview</button>
                 <button type="button" class="fa fa-floppy-o" onclick="saveSprite(null);"> Save</button>
-              </center>
                   export as: <select id="sprtMode" onchange="onSprtExportMode()">
                     <option value=sprtASM>single .asm</option>
                     <option value=sprt1Bin>single .bin</option>
@@ -189,11 +201,10 @@
                 <br>include palette&nbsp;<input type="checkbox" id="includePal" name="includePal">
                 skip empty&nbsp;<input type="checkbox" id="skpEmpty" name="skpEmpty">
             </div>                    
-            <div id="saveBobs" style='background-color:rgba(200,200,200,0.5);'>
-              <center><h3><i>Bob Export</i></h3>
+            <div id="saveBobs" style='background-color:rgba(200,200,200,0.2);'>
+            <center><h4><i>Bob Export</i></h4></center>
                 <br><button type="button" id="previewBobBut" class="fa fa-search" onclick="previewBobs(false);"> Preview</button>
                 <button type="button" class="fa fa-floppy-o" onclick="saveBobs();"> Save</button>
-              </center>
                   export as: <select id="bobMode" onchange="onBobExportMode()">
                     <option value=bobASM>single .asm</option>
                     <option value=bobSingleBin>single .bin</option>

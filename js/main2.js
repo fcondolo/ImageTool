@@ -1169,6 +1169,12 @@ function onMouseDown(e) {
 }
 
 function onMouseUp(e) {
+	switch(target_platform) {
+		case "target_OCS" :
+		break;
+		default:
+		return;
+	}
 	if (isInGrabZone(e.clientX, e.clientY)) {
 		viewCanvas.style.cursor = "default";
 		if (grab_state !== "done") {	
@@ -1322,7 +1328,8 @@ function onPlatformChosen() {
 	let saveBplElem = getElem('saveBpl');
 	let savePaletteElem = getElem('savePalette');
 	let pi1Elem = getElem('pi1Span');
-	
+	let viewShow = getElem("viewshow_grab");
+
 	
 	switch(target_platform) {
 		case "target_OCS" :
@@ -1341,6 +1348,7 @@ function onPlatformChosen() {
 			sptElem.style.display = 'none';
 			bobElem.style.display = 'none';
 			OCSOptionsElem.style.display = 'none';
+			viewShow.style.display = 'none';
 			workBenchElem.style.display = 'block';
 			savePSXElem.style.display = 'none';
 			saveBplElem.style.display = 'block';
@@ -1352,6 +1360,7 @@ function onPlatformChosen() {
 			sptElem.style.display = 'none';
 			bobElem.style.display = 'none';
 			OCSOptionsElem.style.display = 'none';
+			viewShow.style.display = 'none';
 			workBenchElem.style.display = 'block';
 			savePSXElem.style.display = 'none';
 			saveBplElem.style.display = 'block';
@@ -1364,6 +1373,7 @@ function onPlatformChosen() {
 			bobElem.style.display = 'none';
 			OCSOptionsElem.style.display = 'none';
 			workBenchElem.style.display = 'none';
+			viewShow.style.display = 'none';
 			savePSXElem.style.display = 'block';
 			saveBplElem.style.display = 'none';
 			savePaletteElem.style.display = 'none';
@@ -1773,7 +1783,6 @@ function OCSOnly(_msg) {
 }
 
 function importPalette() {
-	if (!OCSOnly("palette import")) return;
 	var mode = getElemValue('loadpalettefrom');
 	if (mode === 'loadpalettefrom_png') {
 		let input = document.createElement('input');
