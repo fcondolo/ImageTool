@@ -1073,6 +1073,22 @@ function saveBpl() {
 	saveAs(palblob, palfileName);
   }
 
+  function save8Bit() {
+	if (global_palette.length > 256) {
+		alert("Can't export indexes:  - Wrong palette size - Found " + global_palette.length + " colors, but the indexes export supports 256 colors max, as each palette index is stored on 8 bits.");
+		return;
+	}
+	var data = new Uint8Array(cropW * cropH);
+	data.fill(0);
+	var readIndex = 0;
+	var writeIndex = 0;
+	while (readIndex < pixelsPaletteIndex.length) {
+		data[writeIndex++] = pixelsPaletteIndex[readIndex++];
+	}
+	var palblob = new Blob([data], {type: "application/octet-stream"});
+	var palfileName = export_fileName + "_indexes.bin";
+	saveAs(palblob, palfileName);
+  }
 
 
 function savePalette(_asText){

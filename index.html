@@ -150,10 +150,12 @@
                   &nbsp;&nbsp;&nbsp;bpl 5&nbsp;<input type="checkbox" id="xport5" name="xport5">                
                   &nbsp;&nbsp;&nbsp;Interleave&nbsp;<input type="checkbox" id="xportInterleave" name="xportInterleave">
                 </span>
-                <br><br><button type="button" class="fa fa-file-image-o" onclick="saveRaw();"> Save RGB</button>
+                <br><br><button type="button" class="fa fa-file-image-o" onclick="saveRaw();"> RAW RGB</button>
                 &nbsp;(12 bit RGB stored on 16 bits per pix)
-                <br><br><button type="button" class="fa fa-file-text-o" onclick="save4Bit();"> Save Indexes</button>
+                <br><br><button type="button" class="fa fa-file-text-o" onclick="save4Bit();"> 4bit Indexes</button>
                 &nbsp;(4 bits per pix palette index, so 1 byte is 2 pix, 16 colors max)
+                <br><br><button type="button" class="fa fa-file-text-o" onclick="save8Bit();"> 8bit Indexes</button>
+                &nbsp;(8 bits per pix palette index)
             </div>
             <div id="savePalette" style='background-color:rgba(200,200,200,0.2);'>
             <center><h4><i>Palette Export</i></h4></center>
