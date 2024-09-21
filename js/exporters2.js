@@ -192,7 +192,8 @@ function saveSprite(_saveWindow) {
 			var sprtAttachedCStr = "unsigned short " + thisName + "_attached[] = {\n";
 			if (coveredWidth > 0)
 				allExported += ", ";
-			allExported += sprtStr + ", " + sprtAttachedStr;
+			allExported += sprtStr;
+			if (attached) allExported += ", " + sprtAttachedStr;
 			sprtStr += ":\n";
 			sprtAttachedStr += ":\n";
 			singleBinFAT += thisName + "\tEQU\t" + writeIndex + "\n";
