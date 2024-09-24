@@ -195,13 +195,15 @@
                 &nbsp;&nbsp;&nbsp;height&nbsp;<input type="text" id="sprtH" name="sprtH" onchange="onSprtH()" size="8">
                 &nbsp;&nbsp;&nbsp;count&nbsp;<input type="text" id="sprtC" name="sprtC" onchange="onSprtC()" size="8">
                 <!-- &nbsp;&nbsp;&nbsp;<a href="#viewCanvas" onclick="document.getElementById('viewShow').value='viewShow_sprites'";>Preview</a> -->
-                <br>include header words&nbsp;<input type="checkbox" id="includeCtrl" name="includeCtrl">
+                <br><b>include header words</b>&nbsp;<input type="checkbox" id="includeCtrl" name="includeCtrl">&nbsp;&nbsp;<i>(will add the 2 control words needed for DMA use at the begining of the sprite data)</i>
+                <br><b>include stop words</b>&nbsp;<input type="checkbox" id="includeDMAStop" name="includeDMAStop">&nbsp;&nbsp;<i>(will add 2 empty words (dc.w 0,0) at the end of the sprite data to stop the DMA)</i>
+                <br><b>include palette</b>&nbsp;<input type="checkbox" id="includePal" name="includePal">
                 &nbsp;&nbsp;&nbsp;screen X&nbsp;<input type="text" id="sprtScrX" name="sprtScrX" size="8">
                 &nbsp;&nbsp;&nbsp;screen Y&nbsp;<input type="text" id="sprtScrY" name="sprtScrY" size="8">
                 &nbsp;&nbsp;&nbsp;HSTART ofs&nbsp;<input type="text" id="sprtOfsX" name="sprtOfsX" size="8">
                 &nbsp;&nbsp;&nbsp;VSTART ofs&nbsp;<input type="text" id="sprtOfsY" name="sprtOfsY" size="8">
-                <br>include palette&nbsp;<input type="checkbox" id="includePal" name="includePal">
                 skip empty&nbsp;<input type="checkbox" id="skpEmpty" name="skpEmpty">
+                <br>
             </div>                    
             <div id="saveBobs" style='background-color:rgba(200,200,200,0.2);'>
             <center><h4><i>Bob Export</i></h4></center>

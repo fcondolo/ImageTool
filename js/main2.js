@@ -459,6 +459,7 @@ function onDrop(_fname) {
 	getElem('xportInterleave').checked = false;
 	getElem('includeCount').checked = false;
 	getElem('includeCtrl').checked = false;
+	getElem('includeDMAStop').checked = false;
 	getElem('includePal').checked = false;
 	getElem('skpEmpty').checked = false;
 	
@@ -1715,6 +1716,7 @@ function framesToSprites() {
 	setElemValue('sprtH', spriteWindow.h);
 	setElemValue('viewShow','viewShow_sprites');
 	setElemChecked('includeCtrl', true);
+	setElemChecked('includeDMAStop', true);
 	setElemValue('sprtMode','sprtASM');
 	setElemChecked('includePal', false);
 

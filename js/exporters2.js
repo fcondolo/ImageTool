@@ -1,4 +1,4 @@
-function genSpriteCtrlWords(x,y,h, attached) {
+function genSpriteCtrlWords(x,y,h, attached) {	
 	var HSTART = v(x + getElemInt10('sprtOfsX'));
 	var VSTART = v(y + getElemInt10('sprtOfsY'));
 	var VSTOP  = v(VSTART + h);
@@ -57,6 +57,14 @@ function endSaveSession() {
 	saveSession = null;
 }
 
+function SprtWordsToArray(_data, _writeIndex, _words) {
+	_data[_writeIndex++] = (_words.pos>>8)&255;
+	_data[_writeIndex++] = _words.pos&255;
+	_data[_writeIndex++] = (_words.ctl>>8)&255;
+	_data[_writeIndex++] = _words.ctl&255;
+	return _writeIndex;
+}
+
 function saveSprite(_saveWindow) {
 	setElemValue('viewShow','viewShow_sprites');
 	
@@ -77,6 +85,7 @@ function saveSprite(_saveWindow) {
 		sprtScrX	= getElemInt10('sprtScrX');
 		sprtScrY	= getElemInt10('sprtScrY');	
 	}
+	var includeDMAStop = isElemChecked('includeDMAStop');
 	var includePal	= isElemChecked('includePal');
 	var skpEmpty	= isElemChecked('skpEmpty');
 	var sprtC		= getElemInt10('sprtC');
@@ -146,7 +155,8 @@ function saveSprite(_saveWindow) {
 	var img = pixelsPaletteIndex;
 	var data;
 	var data1;
-	var writeIndex;
+	var writeIndex = 0;
+	var writeIndex1 = 0;
 	var coveredWidth = 0;
 	var coveredHeight = 0;
 	var d = new Date();
@@ -158,25 +168,17 @@ function saveSprite(_saveWindow) {
 	var exportNumber = 0;
 
 	var binSize = 0;
+	var xtraBytesPerSprite = 0;
+	if (includeCtrl) xtraBytesPerSprite += 4;
+	if (includeDMAStop) xtraBytesPerSprite += 4;
 	if (singleBin) {
-		if (includeCtrl) {
-			binSize = sprtC * (4 * bitplaneHeight + 4);
-			data = new Uint8Array(binSize);
-			data.fill(0);
-			data1 = new Uint8Array(binSize);
-			data1.fill(0);
-			writeIndex = 0;
-			writeIndex1 = 0;
-		}
-		else {
-			binSize = sprtC * (4 * bitplaneHeight);
-			data = new Uint8Array(binSize);
-			data.fill(0);
-			data1 = new Uint8Array(binSize);
-			data1.fill(0);
-			writeIndex = 0;
-			writeIndex1 = 0;
-		}	
+		binSize = sprtC * (4 * bitplaneHeight + xtraBytesPerSprite);
+		data = new Uint8Array(binSize);
+		data.fill(0);
+		data1 = new Uint8Array(binSize);
+		data1.fill(0);
+		writeIndex = 0;
+		writeIndex1 = 0;
 	}
 
 
@@ -202,39 +204,25 @@ function saveSprite(_saveWindow) {
 			if (singleBin) {
 				if (includeCtrl) {
 					var words = genSpriteCtrlWords(coveredWidth + sprtScrX, coveredHeight + sprtScrY, sprtH, false);
-					data[writeIndex++] = words.pos>>8; // write control words
-					data[writeIndex++] = words.pos&255;
-					data[writeIndex++] = words.ctl>>8;				
-					data[writeIndex++] = words.ctl&255;				
+					writeIndex = SprtWordsToArray(data, writeIndex, words);
 					words = genSpriteCtrlWords(coveredWidth + sprtScrX, coveredHeight + sprtScrY, sprtH, attached);
-					data1[writeIndex1++] = words.pos>>8;
-					data1[writeIndex1++] = words.pos&255;
-					data1[writeIndex1++] = words.ctl>>8;
-					data1[writeIndex1++] = words.ctl&255;
+					writeIndex1 = SprtWordsToArray(data1, writeIndex1, words);
 				}
 			} else {
+				data = new Uint8Array(4 * bitplaneHeight + xtraBytesPerSprite);
+				data.fill(0);
+				data1 = new Uint8Array(4 * bitplaneHeight + xtraBytesPerSprite);
+				data1.fill(0);
 				if (includeCtrl) {
 					var words = genSpriteCtrlWords(coveredWidth + sprtScrX, coveredHeight + sprtScrY, sprtH, false);
 					sprtStr += "\tdc.w\t$" + v(words.pos & 65535).toString(16) + ", $" + v(words.ctl & 65535).toString(16) + "\t; control words\n";
 					sprtCStr += "\t0x" + v(words.pos & 65535).toString(16) + ",0x" + v(words.ctl & 65535).toString(16) + ",\t// control words\n";
+					writeIndex = SprtWordsToArray(data, writeIndex, words);
 					words = genSpriteCtrlWords(coveredWidth + sprtScrX, coveredHeight + sprtScrY, sprtH, attached);
 					sprtAttachedStr += "\tdc.w\t$" + v(words.pos & 65535).toString(16) + ", $" + v(words.ctl & 65535).toString(16) + "\t; control words\n";
 					sprtAttachedCStr += "\t0x" + v(words.pos & 65535).toString(16) + ",0x" + v(words.ctl & 65535).toString(16) + ",\t// control words\n";
-					data = new Uint8Array(4 * bitplaneHeight + 4);
-					data.fill(0);
-					data1 = new Uint8Array(4 * bitplaneHeight + 4);
-					data1.fill(0);
-					writeIndex = 4;
-					writeIndex1 = 4;
+					writeIndex1 = SprtWordsToArray(data1, writeIndex1, words);
 				}
-				else {
-					data = new Uint8Array(4 * bitplaneHeight);
-					data.fill(0);
-					data1 = new Uint8Array(4 * bitplaneHeight);
-					data1.fill(0);
-					writeIndex = 0;
-					writeIndex1 = 0;
-				}	
 			}
 	
 			var hasData = false;
@@ -318,6 +306,17 @@ function saveSprite(_saveWindow) {
 				sprtAttachedCStr += "\n";
 				data1[writeIndex1++] = w;
 			}
+			if (includeDMAStop) {
+				sprtStr += "\n\tdc.w\t0,0\t; stop DMA";
+				sprtAttachedStr += "\n\tdc.w\t0,0\t; stop DMA";
+				sprtCStr += "\n\t0,0\t// stop DMA";
+				sprtAttachedCStr += "\n\t0,0\t// stop DMA";
+				data[writeIndex++] = 0;
+				data[writeIndex++] = 0;
+				data1[writeIndex1++] = 0;
+				data1[writeIndex1++] = 0;
+			}
+
 			if (saveSession) {
 				saveSession += sprtStr + "\n";
 				if (attached)
