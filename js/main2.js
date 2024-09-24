@@ -458,8 +458,8 @@ function onDrop(_fname) {
 	getElem('bobSkpEmpty').checked = false;
 	getElem('xportInterleave').checked = false;
 	getElem('includeCount').checked = false;
-	getElem('includeCtrl').checked = false;
-	getElem('includeDMAStop').checked = false;
+	getElem('includeCtrl').checked = true;
+	getElem('includeDMAStop').checked = true;
 	getElem('includePal').checked = false;
 	getElem('skpEmpty').checked = false;
 	

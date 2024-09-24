@@ -277,7 +277,7 @@ function saveSprite(_saveWindow) {
 				
 				sprtStr += TwoCharStringHEX(w)+"\n";
 				sprtCStr += TwoCharStringHEX(w);
-				if (lineIndex !== sprtH-1)
+				if ((lineIndex !== sprtH-1) || (includeDMAStop))
 					sprtCStr += ",";
 				sprtCStr += "\n";
 
@@ -307,12 +307,16 @@ function saveSprite(_saveWindow) {
 				data1[writeIndex1++] = w;
 			}
 			if (includeDMAStop) {
-				sprtStr += "\n\tdc.w\t0,0\t; stop DMA";
-				sprtAttachedStr += "\n\tdc.w\t0,0\t; stop DMA";
-				sprtCStr += "\n\t0,0\t// stop DMA";
-				sprtAttachedCStr += "\n\t0,0\t// stop DMA";
+				sprtStr += "\tdc.w\t$0000, $0000\t; stop DMA";
+				sprtAttachedStr += "tdc.w\t$0000, $0000\t; stop DMA";
+				sprtCStr += "\t0x0000,0x0000\t// stop DMA\n";
+				sprtAttachedCStr += "\t0x0000,0x0000\t// stop DMA\n";
 				data[writeIndex++] = 0;
 				data[writeIndex++] = 0;
+				data[writeIndex++] = 0;
+				data[writeIndex++] = 0;
+				data1[writeIndex1++] = 0;
+				data1[writeIndex1++] = 0;
 				data1[writeIndex1++] = 0;
 				data1[writeIndex1++] = 0;
 			}
@@ -330,7 +334,7 @@ function saveSprite(_saveWindow) {
 							asmStr += sprtAttachedStr + "\n";
 						asmStr += ";========================================\n\n";
 					} else if (xportC) {
-						cStr += sprtCStr + "};\n";
+						cStr += sprtCStr + '\n';
 						if (attached)
 							cStr += sprtAttachedCStr + "\n";
 						cStr += "};\n//========================================\n\n";
