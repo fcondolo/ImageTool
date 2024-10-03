@@ -308,7 +308,7 @@ function saveSprite(_saveWindow) {
 			}
 			if (includeDMAStop) {
 				sprtStr += "\tdc.w\t$0000, $0000\t; stop DMA";
-				sprtAttachedStr += "tdc.w\t$0000, $0000\t; stop DMA";
+				sprtAttachedStr += "\tdc.w\t$0000, $0000\t; stop DMA";
 				sprtCStr += "\t0x0000,0x0000\t// stop DMA\n";
 				sprtAttachedCStr += "\t0x0000,0x0000\t// stop DMA\n";
 				data[writeIndex++] = 0;
