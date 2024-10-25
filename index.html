@@ -154,8 +154,10 @@
                 &nbsp;(12 bit RGB stored on 16 bits per pix)
                 <br><br><button type="button" class="fa fa-file-text-o" onclick="save4Bit();"> 4bit Indexes</button>
                 &nbsp;(4 bits per pix palette index, so 1 byte is 2 pix, 16 colors max)
-                <br><br><button type="button" class="fa fa-file-text-o" onclick="save8Bit();"> 8bit Indexes</button>
+                <br><br><button type="button" class="fa fa-file-text-o" onclick="save8Bit(0,255,1);"> 8bit Indexes</button>
                 &nbsp;(8 bits per pix palette index)
+                <br><br><button type="button" class="fa fa-file-text-o" onclick="save8Bit(0,15,4);"> 8bit Indexes C2P</button>
+                &nbsp;(8 bits per pix palette index: 0..15 * 4. Used for Atari C2P. Take colors (between 0 and 15), and multiply by 4)
             </div>
             <div id="savePalette" style='background-color:rgba(200,200,200,0.2);'>
             <center><h4><i>Palette Export</i></h4></center>

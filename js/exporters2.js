@@ -1077,7 +1077,7 @@ function saveBpl() {
 	saveAs(palblob, palfileName);
   }
 
-  function save8Bit() {
+  function save8Bit(_min, _max, _mult) {
 	if (global_palette.length > 256) {
 		alert("Can't export indexes:  - Wrong palette size - Found " + global_palette.length + " colors, but the indexes export supports 256 colors max, as each palette index is stored on 8 bits.");
 		return;
@@ -1087,7 +1087,16 @@ function saveBpl() {
 	var readIndex = 0;
 	var writeIndex = 0;
 	while (readIndex < pixelsPaletteIndex.length) {
-		data[writeIndex++] = pixelsPaletteIndex[readIndex++];
+		let col = pixelsPaletteIndex[readIndex++];
+		if (col < _min) {
+			alert("Can't export indexes:  color value: " + col + " is lower than min: " + _min);
+			return;	
+		}
+		if (col > _max) {
+			alert("Can't export indexes:  color value: " + col + " is higher than max: " + _max);
+			return;	
+		}
+		data[writeIndex++] = col*_mult;
 	}
 	var palblob = new Blob([data], {type: "application/octet-stream"});
 	var palfileName = export_fileName + "_indexes.bin";
