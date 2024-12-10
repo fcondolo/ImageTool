@@ -1096,7 +1096,15 @@ function saveBpl() {
 			alert("Can't export indexes:  color value: " + col + " is higher than max: " + _max);
 			return;	
 		}
-		data[writeIndex++] = col*_mult;
+		let writeMe = Math.floor(col*_mult);
+		if (_mult  == 4) {
+			if ((writeMe & 3) != 0) {
+				debugger;
+				alert("wtf");
+			}
+		}
+	//	console.log(writeMe);
+		data[writeIndex++] = writeMe;
 	}
 	var palblob = new Blob([data], {type: "application/octet-stream"});
 	var palfileName = export_fileName + "_indexes.bin";
