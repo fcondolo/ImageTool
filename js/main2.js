@@ -964,6 +964,7 @@ function componentToSTE(_c) {
 	return _1 | (_2 << 1)| (_3 << 2)| (_0 << 3)
 }
 
+
 function nearestPalEntry(_e) {
 	var col = color_convert_method(_e.r, _e.g, _e.b);
 	const remainingBits = 8 - platform_colorBits;
@@ -1838,9 +1839,20 @@ function importPalette() {
 			.catch(err => {
 			  alert('Failed to read clipboard contents: ', err);
 			});
+		} else if (mode === 'loadpalettefrom_gradientMaster') {
+			ENABLE_KEYS = false;
+			showModalBox("<textarea name='grdtText' id='grdtText' cols='80' rows='5'>paste only the dc.w lines here</textarea>", ongradientMaster);
 		} else {
 			alert('unknow load palette mode');
 		}
+}
+
+function ongradientMaster() {
+	ENABLE_KEYS = true;
+	var elm = document.getElementById("grdtText");
+	if (elm) {
+		remapPaletteFromText(elm.value, true);
+	}
 }
 
 
@@ -1892,7 +1904,16 @@ function isHexChar(_c) {
 	}
 }
 
-function remapPaletteFromText(_text) {
+function ST_ColConvertSTEto255(_v) {
+	const _3 = (_v & 0b0100) >> 2;
+	const _2 = (_v & 0b0010) >> 1;
+	const _1 = (_v & 0b0001);
+	const _0 = (_v & 0b1000) >> 3;
+	const col = _0 | (_1<<1) | (_2<<2) | (_3<<3);
+	return col * 16;
+}
+
+function remapPaletteFromText(_text, _useSteToComponent) {
 	global_palette = [];
 	var txt = {index:0,chars:_text,over:false,writeIndex:0};
 	var lineNum = -1;
@@ -1947,7 +1968,14 @@ function remapPaletteFromText(_text) {
 			var b = hexnum & 15;
 			var g = (hexnum>>4) & 15;
 			var r = (hexnum>>8) & 15;
-			global_palette.push({r:r<<4,g:g<<4,b:b<<4});
+			if (_useSteToComponent) {
+				r = ST_ColConvertSTEto255(r);
+				g = ST_ColConvertSTEto255(g);
+				b = ST_ColConvertSTEto255(b);
+				global_palette.push({r:r,g:g,b:b});
+			} else {
+				global_palette.push({r:r<<4,g:g<<4,b:b<<4});
+			}
 		}
 	}
 	postPaletteUpdate();
@@ -2021,3 +2049,45 @@ function postPaletteUpdate() {
 	workContext.putImageData(workImageData, 0, 0);
 	refreshPaletteInfo();	
 }
+
+function hideModalBox(_content, _closeCallback) {
+	var modal = document.getElementById("myModal");
+	modal.style.display = "none";
+	if (_closeCallback)
+	  _closeCallback();
+  }
+
+  function showModalBox(_content, _closeCallback) {
+	// Get the modal
+	var modal = document.getElementById("myModal");
+	if (_content) // content may already be filled outside of this function (by the caller)
+	  document.getElementById("modalContent").innerHTML = _content;
+  
+	// Get the <span> element that closes the modal
+	var span = document.getElementsByClassName("close")[0];
+	var closeb = document.getElementById("modalclose");
+  
+	modal.style.display = "block";
+  
+	// When the user clicks on <span> (x), close the modal
+	span.onclick = function() {
+	  modal.style.display = "none";
+	  if (_closeCallback) _closeCallback();
+	}
+  
+	closeb.onclick = function() {
+		if (_closeCallback) _closeCallback();
+		modal.style.display = "none";
+	}
+  
+  
+  
+	// When the user clicks anywhere outside of the modal, close it
+	window.onclick = function(event) {
+	  if (event.target == modal) {
+		modal.style.display = "none";
+		if (_closeCallback) _closeCallback();
+	  }
+	}  
+  }
+  

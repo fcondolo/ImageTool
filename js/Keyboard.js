@@ -1,7 +1,9 @@
 var SHIFT = false;
 var CTRL = false;
+var ENABLE_KEYS = true;
 
 function keyDown(event) {
+    if (!ENABLE_KEYS) return;
     var key = event.keyCode;
     switch (key) {
         // Special keys
@@ -13,6 +15,7 @@ function keyDown(event) {
 }
 
 function keyUp(event) {
+    if (!ENABLE_KEYS) return;
     var key = event.keyCode;
     switch (key) {
         // Special keys
