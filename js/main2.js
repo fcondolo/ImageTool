@@ -1832,6 +1832,10 @@ function importPalette() {
 		};
 		input.click();	
 		} else if (mode === 'loadpalettefrom_clip') {
+			if (!navigator.clipboard) {
+				alert("For security reasons, can't access navigator's clipboard. Please run this page from a HTTPS site or from localhost");
+				return;
+			}
 			navigator.clipboard.readText()
 			.then(text => {
 				remapPaletteFromText(text);
