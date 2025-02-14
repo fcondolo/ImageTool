@@ -1319,67 +1319,86 @@ function grabToBobs() {
 }
 
 
-
-function onPlatformChosen() {
-    target_platform = getElem('platform').value;
+function showOCSItems(_show) {
 	let sptElem = getElem('saveSprite');
 	let bobElem = getElem('saveBobs');
 	let OCSOptionsElem = getElem('xportBplOCSOptions');
 	let workBenchElem = getElem('workBench');
-	let savePSXElem = getElem('savePSX');
+	let saveBplElem = getElem('saveBpl');
+	let savePaletteElem = getElem('savePalette');
+
+	let opt;
+	if (_show) opt = 'block'; else opt = 'none';
+
+	sptElem.style.display = opt;
+	bobElem.style.display =  opt;
+	OCSOptionsElem.style.display =  opt;
+	workBenchElem.style.display =  opt;
+	saveBplElem.style.display =  opt;
+	savePaletteElem.style.display =  opt;
+}
+
+function showSTItems(_show) {
+	let workBenchElem = getElem('workBench');
 	let saveBplElem = getElem('saveBpl');
 	let savePaletteElem = getElem('savePalette');
 	let pi1Elem = getElem('pi1Span');
-	let viewShow = getElem("viewshow_grab");
+	let STOptionsElem = getElem('xportBplAtariOptions');
 
+	let opt;
+	if (_show) {
+		opt = 'block'; 
+		document.getElementById('ST_xport1').checked = true;
+		document.getElementById('ST_xport2').checked = true;
+		document.getElementById('ST_xport3').checked = true;
+		document.getElementById('ST_xport4').checked = true;
+	} else {
+		opt = 'none';
+	} 
+
+	workBenchElem.style.display = opt;
+	saveBplElem.style.display = opt;
+	savePaletteElem.style.display = opt;
+	pi1Elem.style.display = opt;
+	STOptionsElem.style.display = opt;
+}
+
+function showPSXItems(_show) {
+	let savePSXElem = getElem('savePSX');
+
+	let opt;
+	if (_show) opt = 'block'; else opt = 'none';
+
+	savePSXElem.style.display = opt;
+}
+
+function onPlatformChosen() {
+    target_platform = getElem('platform').value;
 	
 	switch(target_platform) {
 		case "target_OCS" :
 			platform_colorBits = 4;
-			sptElem.style.display = 'block';
-			bobElem.style.display = 'block';
-			OCSOptionsElem.style.display = 'block';
-			workBenchElem.style.display = 'block';
-			savePSXElem.style.display = 'none';
-			saveBplElem.style.display = 'block';
-			savePaletteElem.style.display = 'block';
-			pi1Elem.style.display = 'none';
+			showSTItems(false);
+			showPSXItems(false);
+			showOCSItems(true);
 		break;
 		case "target_STE" :
 			platform_colorBits = 4;
-			sptElem.style.display = 'none';
-			bobElem.style.display = 'none';
-			OCSOptionsElem.style.display = 'none';
-			viewShow.style.display = 'none';
-			workBenchElem.style.display = 'block';
-			savePSXElem.style.display = 'none';
-			saveBplElem.style.display = 'block';
-			savePaletteElem.style.display = 'block';
-			pi1Elem.style.display = 'block';
+			showOCSItems(false);
+			showPSXItems(false);
+			showSTItems(true);
 		break; 
 		case "target_ST" : 
 			platform_colorBits = 3;
-			sptElem.style.display = 'none';
-			bobElem.style.display = 'none';
-			OCSOptionsElem.style.display = 'none';
-			viewShow.style.display = 'none';
-			workBenchElem.style.display = 'block';
-			savePSXElem.style.display = 'none';
-			saveBplElem.style.display = 'block';
-			savePaletteElem.style.display = 'block';
-			pi1Elem.style.display = 'block';
+			showOCSItems(false);
+			showPSXItems(false);
+			showSTItems(true);
 		break;
 		case "target_PSX16" :
 			platform_colorBits = 5;
-			sptElem.style.display = 'none';
-			bobElem.style.display = 'none';
-			OCSOptionsElem.style.display = 'none';
-			workBenchElem.style.display = 'none';
-			viewShow.style.display = 'none';
-			savePSXElem.style.display = 'block';
-			saveBplElem.style.display = 'none';
-			savePaletteElem.style.display = 'none';
-			pi1Elem.style.display = 'none';
+			showSTItems(false);
+			showOCSItems(false);
+			showPSXItems(true);
 		break;
 		default:
 			setElemValue('platform','target_OCS');

@@ -708,8 +708,23 @@ function saveBpl_ST() {
 	// Bitplane definition: https://www.fxjavadevblog.fr/atari-st-4-bitplanes/
 	// Bitplane Simulator: https://www.fxjavadevblog.fr/atari-st-4-bitplanes-simulator/
 
+	var xportBpl = [];
+	xportBpl[0] = document.getElementById('ST_xport1').checked;
+	xportBpl[1] = document.getElementById('ST_xport2').checked;
+	xportBpl[2] = document.getElementById('ST_xport3').checked;
+	xportBpl[3] = document.getElementById('ST_xport4').checked;
+	let bplCount = 0;
+	if (xportBpl[0]) bplCount++;
+	if (xportBpl[1]) bplCount++;
+	if (xportBpl[2]) bplCount++;
+	if (xportBpl[3]) bplCount++;
 	let pi1 = document.getElementById('pi1').checked;
-	const bytesPerLine = v(cropW/2);
+	if ((cropW%16) != 0) {
+		alert("failed: image width must be a multiple of 16");
+		return;
+	}
+	const bytesPerPacket = 2*bplCount;
+	const bytesPerLine = v((cropW/16)*bytesPerPacket);
 	let imgSize = v(cropH * bytesPerLine);
 	if (pi1) imgSize += 34;
 	let bitplanesData = new Uint8Array(imgSize);
@@ -873,16 +888,25 @@ function saveBpl_ST() {
 			if ((col4 & 4) == 4) _4Words[5] |= 1;
 			if ((col4 & 8) == 8) _4Words[7] |= 1;
 
-			bitplanesData[writeIndex++] = _4Words[0];
-			bitplanesData[writeIndex++] = _4Words[1];
-			bitplanesData[writeIndex++] = _4Words[2];
-			bitplanesData[writeIndex++] = _4Words[3];
-			bitplanesData[writeIndex++] = _4Words[4];
-			bitplanesData[writeIndex++] = _4Words[5];
-			bitplanesData[writeIndex++] = _4Words[6];
-			bitplanesData[writeIndex++] = _4Words[7];
+			if (xportBpl[0]) {
+				bitplanesData[writeIndex++] = _4Words[0];
+				bitplanesData[writeIndex++] = _4Words[1];	
+			}
+			if (xportBpl[1]) {
+				bitplanesData[writeIndex++] = _4Words[2];
+				bitplanesData[writeIndex++] = _4Words[3];
+			}
+			if (xportBpl[2]) {
+				bitplanesData[writeIndex++] = _4Words[4];
+				bitplanesData[writeIndex++] = _4Words[5];
+			}
+			if (xportBpl[3]) {
+				bitplanesData[writeIndex++] = _4Words[6];
+				bitplanesData[writeIndex++] = _4Words[7];
+			}
 		}
 	}
+	if (writeIndex != imgSize) alert("expected to write " + imgSize + " bytes, but wrote " + writeIndex + " bytes.");
 	var blob = new Blob([bitplanesData], {type: "application/octet-stream"});
 	var fileName = export_fileName;
 	if (pi1) 
