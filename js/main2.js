@@ -213,6 +213,18 @@ function onLoad() {
 	var dropZone = getElem('refImg');
 	dropZone.addEventListener('dragover', handleDragOver, false);
 	dropZone.addEventListener('drop', handleFileSelect, false);
+	let pltfrm = "target_OCS";
+	try {
+		switch(localStorage.getItem('platform')) {
+			case "target_OCS" : pltfrm = "target_OCS"; break;
+			case "target_STE" : pltfrm = "target_STE"; break;
+			case "target_PSX16" : pltfrm = "target_PSX16"; break;
+			default: pltfrm = "target_OCS"; break;
+		}
+	} catch (e) {		
+	}
+
+	getElem('platform').value = pltfrm;
 	onPlatformChosen();
 	window.requestAnimationFrame(viewShow_step);
 }
@@ -1374,7 +1386,11 @@ function showPSXItems(_show) {
 
 function onPlatformChosen() {
     target_platform = getElem('platform').value;
-	
+	try {
+		localStorage.setItem('platform', target_platform);
+	} catch (e) {
+
+	}
 	switch(target_platform) {
 		case "target_OCS" :
 			platform_colorBits = 4;
