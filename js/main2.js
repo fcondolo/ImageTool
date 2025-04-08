@@ -588,9 +588,10 @@ function refreshPaletteInfo() {
 		}
 	}
 
-	if (global_palette.length < 33) {
+	{
+		let colcnt = Math.min(32, global_palette.length);
 		var palCol = '<ul style="width:100%" id="items">';
-		for (var i = 0; i < global_palette.length; i++) {
+		for (var i = 0; i < colcnt; i++) {
 			var colorValue;
 			if ((i === 0) && isColor0Locked()) {
 				colorValue = "000";
@@ -610,8 +611,10 @@ function refreshPaletteInfo() {
 				remapColorIndex(evt.oldIndex, evt.newIndex);
 			},
 		});
-	} else {
-		getElem('paletteColors').innerHTML = "<b>"+global_palette.length+": too many colors for palette editor</b><br>";
+	} 
+	if (global_palette.length >= 33) {
+	//	getElem('paletteColors').innerHTML = "<b>"+global_palette.length+": too many colors for palette editor, only showing the 32 first entries</b><br>";
+	alert(global_palette.length+": too many colors for palette editor, only showing the 32 first entries");
 	}
 
 }
@@ -2020,6 +2023,14 @@ function remapPaletteFromText(_text, _useSteToComponent) {
 	postPaletteUpdate();
 }
 
+function pal_brighten() {
+	for (let i = 0; i < global_palette.length; i++) {
+		global_palette[i].r = Math.min(255,global_palette[i].r + 2);
+		global_palette[i].g = Math.min(255,global_palette[i].g + 2);
+		global_palette[i].b = Math.min(255,global_palette[i].b + 2);
+	}
+	postPaletteUpdate();
+}
 
 function remapPaletteFromPng(_bin) {
 	var index = 0;
