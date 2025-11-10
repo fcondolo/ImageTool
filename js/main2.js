@@ -1841,6 +1841,22 @@ function importPalette() {
 				  });
 		};
 		input.click();	
+	} else if (mode === 'loadpalettefrom_pi1') {
+		let input = document.createElement('input');
+		input.type = 'file';
+		input.onchange = _ => {
+				  let files =   Array.from(input.files);
+				  fileData = new Blob([files[0]]);
+				  // Pass getBuffer to promise.
+				  var promise = new Promise(getBuffer(fileData));
+				  // Wait for promise to be resolved, or log error.
+				  promise.then(function(data) {
+					remapPaletteFromPi1(data);
+				  }).catch(function(err) {
+					console.log('Error: ',err);
+				  });
+		};
+		input.click();	
 	} else if (mode === 'loadpalettefrom_binary') {
 		let input = document.createElement('input');
 		input.type = 'file';
@@ -2050,6 +2066,20 @@ function remapPaletteFromPng(_bin) {
 			}*/
 			global_palette.push({r:r,g:g,b:b});	
 		}
+	}
+
+	postPaletteUpdate();
+}
+
+function remapPaletteFromPi1(_bin) {
+	var index = 0;
+	global_palette = [];
+	for (let i = 0; i < 16; i++) {
+		const r = _bin[i*2+2];
+		let g = _bin[i*2+3];
+		const b = g & 255;
+		g >>>= 4;
+		global_palette.push({r:ST_ColConvertSTEto255(r),g:ST_ColConvertSTEto255(g),b:ST_ColConvertSTEto255(b)});	
 	}
 
 	postPaletteUpdate();
