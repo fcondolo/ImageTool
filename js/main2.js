@@ -2077,12 +2077,50 @@ function remapPaletteFromPi1(_bin) {
 	for (let i = 0; i < 16; i++) {
 		const r = _bin[i*2+2];
 		let g = _bin[i*2+3];
-		const b = g & 255;
+		const b = g & 15;
 		g >>>= 4;
 		global_palette.push({r:ST_ColConvertSTEto255(r),g:ST_ColConvertSTEto255(g),b:ST_ColConvertSTEto255(b)});	
 	}
 
-	postPaletteUpdate();
+	pixelsPaletteIndex = new Uint8Array(cropW * cropH);
+	var write = 0;
+	var read = 0;
+	for (var y = 0; y < cropH; y++) {
+		for (var x = 0; x < cropW; x+=16) {
+			const index = 34+y*160+(x>>4)*8;
+			let pi1Word1 = (_bin[index+0]<<8)|_bin[index+1];
+			let pi1Word2 = (_bin[index+2]<<8)|_bin[index+3];
+			let pi1Word3 = (_bin[index+4]<<8)|_bin[index+5];
+			let pi1Word4 = (_bin[index+6]<<8)|_bin[index+7];
+			let bit = 15;
+			for (let xx=0; xx<16; xx++, bit--) {
+				let bpl1 = (pi1Word1>>>bit)&1;
+				let bpl2 = (pi1Word2>>>bit)&1;
+				let bpl3 = (pi1Word3>>>bit)&1;
+				let bpl4 = (pi1Word4>>>bit)&1;
+				let clor = bpl1|(bpl2<<1)|(bpl3<<2)|(bpl4<<3);
+				if (clor<0 || clor>15)
+					debug;
+				pixelsPaletteIndex[write++] = clor;
+			}
+		}
+	}
+	
+	var read = 0;
+	var write = 0;
+	for (var y = 0; y < cropH; y++) {
+		for (var x = 0; x < cropW; x++) {
+			var index = pixelsPaletteIndex[read++];
+			var col = global_palette[index];
+			workImagePixels[write] = col.r;
+			workImagePixels[write+1] = col.g;
+			workImagePixels[write+2] = col.b;
+			write += 4;
+		}
+	}	
+	workImageData.data = workImagePixels;
+	workContext.putImageData(workImageData, 0, 0);
+	refreshPaletteInfo();	
 }
 
 function remapPaletteFromBin(_bin) {
